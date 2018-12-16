@@ -1,0 +1,179 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#LogOutAccount" data-toggle="tab">Giải phóng TK</a></li>
+                <li class="nav-item"><a href="#SetupLogin" data-toggle="tab">Thiết lập môi trường đăng nhập</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="LogOutAccount">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">                        
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Số ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Account" class="form-control" maxlength="20">
+                            </div>
+                        </div>                        
+                        <div class="form-group">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="AccountContainer"></div>
+                </div>
+
+                <div id="SetupLogin" class="tab-pane">
+                    <br />
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var dataAccount = null;
+    $(document).ready(function () {
+        $('#AccountContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;' >Danh sách tài khoản</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            sortable: false,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', align: 'center', cellsalign: 'left', editable: false },
+                { text: 'Tài khoản', dataField: 'col_2', width: '15%', align: 'center', cellsalign: 'left', editable: false },
+                { text: 'Họ tên', dataField: 'col_3', width: '23%', align: 'center', cellsalign: 'left', editable: false },
+                { text: 'Trạng thái', dataField: 'col_4', width: '10%', align: 'center', cellsalign: 'left', editable: false },
+                { text: 'Địa chỉ MAC', dataField: 'col_5', width: '13%', align: 'center', editable: false },
+                { text: 'Đăng nhập gần nhất', dataField: 'col_6', width: '15%', align: 'center', editable: false },
+                { text: 'Đăng xuất gần nhất', dataField: 'col_7', width: '15%', align: 'center', editable: false },
+                {
+                    text: '', dataField: 'col_9', width: '3%', cellsrenderer: function (row, columnfield, value) {
+                        if (value == '1') {
+                            return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                ' onclick="checkCNN(\'' + row + '\',\'' + 0 + '\' )" >' +
+                                '<img src="/images/unlocked.png" title="Khóa tài khoản"/></a></div>';
+                        } else {
+                            return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                ' onclick="checkCNN(\'' + row + '\',\'' + 1 + '\')" >' +
+                                '<img src="/images/locked.png" title="Mở khóa tài khoản"/></a></div>';
+                        }
+                    }
+                },
+                {
+                    text: ' ', dataField: 'col_8', width: '3%', cellsrenderer: function (row, columnfield, value) {                        
+                        return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                        ' onclick="checkCNN(\'' + row + '\',\'' + 2 + '\' )" >' +
+                        '<img src="/images/icons_exit2.png" title="Đăng xuất"/></a></div>';
+                    }
+                }
+            ]
+        });
+        $('#btnSearch').click(function () {
+            if (!$('#Account').val()) {
+                document.getElementById('msg_error').innerHTML = 'Vui lòng nhập số ví thu ngân viên';
+                $("#error").data('myControl', 'Account');
+                $('#error').modal('show');                
+            } else {
+                $('.loading').show();
+                $.ajax({
+                    url: '/Help/SearchAccount',
+                    type: 'post',
+                    data: {
+                        account: $('#Account').val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        if (data.Result == 'SUCCESS') {
+                            dataAccount = data.Records;
+                            $("#AccountContainer").jqxGrid('refresh');
+                            $("#AccountContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceAcc(dataAccount)) });
+                        } else {
+                            dataAccount = null;
+                            $('#AccountContainer').jqxGrid('clear');
+                            document.getElementById('msg_error').innerHTML = data.Message;                           
+                            $('#error').modal('show');                           
+                        }
+                    },
+                    error: function () {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            }
+        });
+    });
+    function sourceAcc(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+            record: "content",
+            root: "entry",
+        };
+        return source;
+    }
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) {
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn mở khóa tài khoản đã chọn không?';
+                        $('#yesno').data('cellValue', cellValue);
+                        $("#yesno").data('index', 9);
+                    } else if (index == 2) {
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn Logout tài khoản đã chọn không?';
+                        $('#yesno').data('cellValue', cellValue);
+                        $("#yesno").data('index', 10);
+                    } else {
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn khóa tài khoản đã chọn không?';
+                        $('#yesno').data('cellValue', cellValue);
+                        $("#yesno").data('index', 9);
+                    }
+                    $('#yesno').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

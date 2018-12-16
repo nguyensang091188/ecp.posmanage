@@ -1,0 +1,430 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@model ePOS3.Models.SearchAPIModel
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function () {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+
+                <li class="nav-item active"><a href="#Finance" data-toggle="tab">Quản lý API</a></li>
+                <li class="nav-item "><a href="#Role" data-toggle="tab">Quản lý Role</a></li>
+                @*<li class="nav-item active"><a href="#OnOffCredit" data-toggle="tab">Bật/tắt chấm nợ</a></li>
+                    <li class="nav-item "><a href="#JobCredit" data-toggle="tab">Tiến trình</a></li>
+                    <li class="nav-item "><a href="#Parameter" data-toggle="tab">Tham số hệ thống</a></li>
+                    <li class="nav-item "><a href="#API" data-toggle="tab">Thêm mới SERVICE</a></li>
+                    <li class="nav-item "><a href="#Role" data-toggle="tab">Quản lý Role</a></li>*@
+            </ul>
+            <div class="tab-content ">
+                <div id="Finance" class="tab-pane active">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tên:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="API_Name" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        @*<div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Thuộc tính:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="API_Method" class="form-control" maxlength="100">
+                            </div>
+                        </div>*@
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Thuộc tính:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.API_Method, Model.APIMethodList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Url:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="API_Url" class="form-control" maxlength="1000">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <label class="radio-inline"><input type="radio" id="API_status" name="lever" checked="checked" value="0">Không hoạt động</label>
+                                <label class="radio-inline" style="margin-left:0;"><input type="radio" id="API_status" name="lever" value="1">Hoạt động</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <div class="col-md-12 col-sm-12 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchAPI" class="btn btn-success">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="API_Contaier"></div>
+                </div>
+                <div class="tab-pane " id="Role">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-3 col-sm-3 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-12 col-sm-12 col-xs-12">Danh sách Agent</label>
+                            <div id="AgentContaier"></div>
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-12 col-sm-12 col-xs-12">Danh sách API</label>
+                            <div id="APIContaier"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+
+<script type="text/javascript">
+    var dataAPI = null;
+    var dataRole = null;
+    $(document).ready(function () {
+        $('#API_Contaier').jqxGrid({
+            width: '100%',
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách API</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px; "><a href="#" class="navbutton" onclick="checkCNN(\'' + 1 + '\',\'' + 1 + '\')" title="Thêm mới API">' +
+                    '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            autoheight: true,
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            autoheight: true,
+            pagesize: 50,
+            pagesizeoptions: ['50','100','200','300','500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            altrows: true,
+
+            columns: [
+                {
+                    text: 'STT', width: '5%', align: 'center', cellsalign: 'left', columntype: 'number', cellsrenderer: function (row, column, value) {
+                        return "<div style='margin:4px;'>" + (value + 1) + "</div>";
+                    } },
+
+                { text: 'Tên API', dataField: 'col_2', width: '25%', cellsalign: 'left', align: 'center' },
+                { text: 'Đường dẫn', dataField: 'col_4', width: '35%', cellsalign: 'left', align: 'center' },
+                {
+                    text: 'Trạng thái', dataField: 'col_5', width: '15%', cellsalign: 'left', align: 'center',
+                    cellsrenderer: function (row, columnfield, value) {
+                        if (value == 1) {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Hoạt động</div>';
+                        } else {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Không hoạt động</div>';
+                        }
+                    }
+                },
+                { text: 'Thuộc tính', dataField: 'col_3', width: '14%', cellsalign: 'left', align: 'center' },
+                {
+                    text: ' ', width: '6%', align: 'center', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 2 + '\')" >' +
+                            '<img src="/images/icon_edit.png" title="Cập nhật"/></a></div>';
+                    }
+                },
+                //{
+                //    text: ' ', width: '3%', align: 'center', cellsrenderer: function (row) {
+                //        return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                //            ' onclick="checkCNN(\'' + row + '\',\'' + 3 + '\')" >' +
+                //            '<img src="/images/icon_del.png" title="Xóa bản ghi"/></a></div>';
+                //    }
+                //},
+            ],
+        });
+        $('#btnSearchAPI').click(function () {
+            var paginginformation = $('#API_Contaier').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchAPI',
+                type: 'post',
+                data: {
+                    name: $('#API_Name').val(),
+                    method: $('#API_Method').val(),
+                    url: $('#API_Url').val(),
+                    status: $('#API_status:checked').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $("#API_Contaier").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceSumAPI(data));
+                        dataAPI = data.Records;
+                        $("#API_Contaier").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                    } else {
+                        dataAPI = null;
+                        $('#API_Contaier').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $('#AgentContaier').jqxTree({
+            width: '100%',
+            height: "500px"
+        });
+        $('#APIContaier').jqxGrid({
+            width: '100%',
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            autoheight: true,
+            pagesize: 500,
+            pagesizeoptions: ['500'],
+            pagerMode: 'advanced',
+            showToolbar: false,
+            altrows: true,
+            rowsheight: 35,
+            columns: [
+                {
+                    text: 'STT', width: '5%', align: 'center', cellsalign: 'left', columntype: 'number', cellsrenderer: function (row, column, value) {
+                        return "<div style='margin:4px;'>" + (value + 1) + "</div>";
+                    }
+                },
+                {
+                    text: 'Trạng thái', dataField: 'col_4', width: '13%', createwidget: function (row, column, value, cellElement) {
+                        var buttonDiv = $("<div id='api_" + row.boundindex + "' style='text-align: center; margin-top: 6px;'" +
+                            " onclick='api_checkbox(" + value + "," + row.boundindex + ")'></div>");
+                        $(cellElement).append(buttonDiv);
+                        if (value == "1") {
+                            buttonDiv.jqxSwitchButton({
+                                height: 25,
+                                width: 75,
+                                checked: true
+                            });
+                        }
+                        else {
+                            buttonDiv.jqxSwitchButton({
+                                height: 25,
+                                width: 75,
+                                checked: false
+                            });
+                        }
+                    },
+                    initwidget: function (row, column, value, cellElement) { }
+                },
+                { text: 'Tên API', dataField: 'col_2', width: '27%', cellsalign: 'left', align: 'center' },
+                { text: 'Đường dẫn', dataField: 'col_3', width: '40%', cellsalign: 'left', align: 'center' },
+                { text: 'Thuộc tính', dataField: 'col_8', width: '10%', cellsalign: 'left', align: 'center' },
+            ],
+        });
+        bindTreeAgent();
+        $('#AgentContaier').on('select', function (event) {
+            $.ajax({
+                url: '/Help/getAPIByAgentFinancial',
+                type: 'post',
+                data: {
+                    agent: $('#AgentContaier').jqxTree('getItem', event.args.element).id
+                },
+                success: function (data) {
+                    //$('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        dataRole = data.Records;
+                        $("#APIContaier").jqxGrid('refresh');
+                        $("#APIContaier").jqxGrid({ source: new $.jqx.dataAdapter(source(dataRole)) });
+                    }
+                    else {
+                        dataRole = null;
+                        $('#APIContaier').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    //$('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+
+    function api_checkbox(value, cellvalue) {
+        $("body").addClass("loading");
+        $.ajax({
+            url: '/Help/doChangeAPIforAgentFinancial',
+            type: 'post',
+            data: {
+                index: cellvalue,
+                datasource: JSON.stringify(dataRole),
+                status: $('#api_' + cellvalue).val()
+            },
+            success: function (data) {
+                $("body").removeClass("loading");
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                else if (data.Result == 'SUCCESS') {
+                    dataRole = data.Records
+                    $("#APIContaier").jqxGrid('refresh');
+                    $("#APIContaier").jqxGrid({ source: new $.jqx.dataAdapter(source(dataRole)) });
+                    $("#APIContaier").jqxGrid('selectrow', cellvalue);
+                } else {
+                    //document.getElementById('msg-Status').style.font = "italic bold 20px time new roman,serif";
+                    //document.getElementById('msg-Status').innerHTML = data.Message;
+                    //$("#dialog-Status").data('row', data.index);
+                    //$("#dialog-Status").data('index', 0);
+                    //$("#dialog-Status").dialog('open');
+                }
+            },
+            error: function () {
+                $("body").removeClass("loading");
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+
+    function source(data) {
+        var source =
+            {
+                id: 'col_1',
+                localData: data,
+            };
+        return source;
+    }
+    function bindTreeAgent() {
+        //$('.loading').show();
+        $.ajax({
+            url: '/Help/getAgentFinancial',
+            type: 'post',
+            success: function (data) {
+                //$('.loading').hide();
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.Result == 'SUCCESS') {
+                    var dataAdapter = new $.jqx.dataAdapter(sourceTreeAgent(data.Records));
+                    dataAdapter.dataBind();
+                    var records = dataAdapter.getRecordsHierarchy('id', 'parentid', 'items', [{ name: 'text', map: 'label' }]);
+                    $('#AgentContaier').jqxTree({ source: records });
+                    $('#AgentContaier').jqxTree('expandAll');
+                    $('#AgentContaier').jqxTree('selectItem', $("#AgentContaier").find('li:first')[0]);
+                } else {
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                //$('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceTreeAgent(data) {
+        var source =
+            {
+                datafields: [
+                    { name: 'id' },
+                    { name: 'parentid' },
+                    { name: 'text' },
+                    { name: 'value' }
+                ],
+                id: 'id',
+                localData: data,
+            };
+        return source;
+    }
+    function sourceSumAPI(data) {
+        var source =
+            {
+                datatype: "array",
+                localData: data.Records,
+                totalrecords: data.total,
+                root: 'Rows',
+                beforeprocessing: function (data) {
+                    source.totalrecords = data[0].col_0;
+                }
+            };
+        return source;
+    }
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) {
+                        $.ajax({
+                            type: 'post',
+                            url: '/Help/_AddAPI',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 2) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_EditAPI',
+                            data: {
+                                id: JSON.stringify($("#API_Contaier").jqxGrid('getrowdata', cellValue)),
+                                index: cellValue
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 3) {
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có muốn xóa bản ghi này không?';
+                        $("#yesno").data('index', 21);
+                        $('#yesno').data('cellValue', cellValue);
+                        $('#yesno').modal('show');
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    };
+
+</script>

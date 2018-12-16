@@ -1,0 +1,625 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ReportPointCollectionModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#SummaryReport" data-toggle="tab">Tổng hợp</a></li>
+                <li class="nav-item" id="idDetailReportEVN"><a href="#DetailReportEVN" data-toggle="tab">Chi tiết điện</a></li>
+                <li class="nav-item" id="idDetaiReportlWater"><a href="#DetaiReportlWater" data-toggle="tab">Chi tiết dịch vụ khác</a></li>
+                
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="SummaryReport">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Dịch vụ:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Service, Model.Services, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Nhà CC:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Loại TK:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status_Acc, Model.StatusAccList, new { @class = "chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccParent, Model.ParentList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccChild, Model.ChildList, new { @multiple = "multiple" })
+                            </div>
+                        </div>
+                        <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback" id="Syn_Pay">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Chấm nợ từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_FromDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_ToDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>   
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchSummaryReport" class="btn btn-success">Tìm kiếm</button>
+                                <input type="hidden" id="id_sum" />
+                                <input type="hidden" id="fromdate_sum" />
+                                <input type="hidden" id="todate_sum" />
+                                <input type="hidden" id="pc_sum" />
+                                <input type="hidden" id="id_service" />
+                            </div>                        
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Thu từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_FromDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status" />
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_ToDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status" />
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                           
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">                                 
+                                <button type="button" id="btnExportSummaryReport" class="btn btn-primary" disabled title="Xuất báo cáo tổng hợp ra định dạng excel" onclick="checkCNN(1)">Xuất File</button>                               
+                            </div>
+                        </div>
+                    </form>
+                    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback ">
+                        <div style="font-size: 16px;padding: 5px 10px 5px 0; color: black; font-weight:bold; font-style:italic; float: left;">
+                            Ghi chú:
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black;  float: left;">
+                            Tiền điện <div style="width: 15px;background-color:#e83636; height: 15px; float: right; margin-left: 10px;"></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Tiền nước <div style="width: 15px;background-color:#b6ff00;height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Topup trả trước <div style="width: 15px;background-color:#1abb9c; height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Topup trả sau <div style="width: 15px;background-color:#FFC0CB; height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Mua mã thẻ <div style="width: 15px;background-color:yellow; height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Truyền hình <div style="width: 15px;background-color:#FF7F50; height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Thẻ data <div style="width: 15px;background-color:#E6E6FA; height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Thẻ game <div style="width: 15px;background-color:#8470FF; height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Tài chính <div style="width: 15px;background-color:#a3e4f3; height: 15px; float: right; margin-left: 10px; "></div>
+                        </div>
+                    </div>
+                    <div id="SumContainer"></div>
+                </div>
+                <div id="DetailReportEVN" class="tab-pane">                    
+                </div>
+                <div id="DetaiReportlWater" class="tab-pane"> 
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+
+<style>
+    .red {
+        color: black\9;
+        background-color: #e83636\9;
+    }
+    .red:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .red:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+        color: black;
+        background-color: #e83636;
+    }
+    .green {
+        color: black\9;
+        background-color: #b6ff00\9;
+    }
+    .green:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .green:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+        color: black;
+        background-color: #b6ff00;
+    }
+    .blue{
+        color: black\9;
+        background-color: #1abb9c\9;
+    }
+    .blue:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .blue:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+        color: black;
+        background-color: #1abb9c;
+    }
+    .pink{
+        color: black\9;
+        background-color: #FFC0CB\9;
+    }
+    .pink:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .pink:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+        color: black;
+        background-color: #FFC0CB;
+    }
+    .yellow {
+        color: black\9;
+        background-color: yellow\9;
+    }
+    .yellow:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .yellow:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+        color: black;
+        background-color: yellow;
+    }
+    .coral{
+        color:black\9;
+        background-color: #FF7F50\9;
+    }
+    .coral:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .coral:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+        color: black;
+        background-color: #FF7F50;
+    }
+    .lavender{
+        color:black\9;
+        background-color: #E6E6FA\9;
+    }
+    .lavender:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .lavender:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+       color:black;
+       background-color: #E6E6FA;
+    }
+    .lightslateblue{
+        color:black\9;
+        background-color: #8470FF\9;
+    }
+    .lightslateblue:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .lightslateblue:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+       color:black;
+       background-color: #8470FF;
+    }
+    .turquoise{
+        color:black\9;
+        background-color: #a3e4f3\9;
+    }
+    .turquoise:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected), .jqx-widget .turquoise:not(.jqx-grid-cell-hover):not(.jqx-grid-cell-selected) {
+       color:black;
+       background-color: #a3e4f3;
+    }
+</style>
+<script type="text/javascript">
+    var dataSum = null;    
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+      
+        $('#AccChild').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+       
+        $('#Service').change(function () {
+            var check = $("#Service option:selected").val();           
+            if (check == 1 || check == 0) {
+                if (check == 0) {
+                    $("#SumContainer").jqxGrid('showcolumn', 'col_4');
+                    $("#SumContainer").jqxGrid('showcolumn', 'col_5');
+                    $("#SumContainer").jqxGrid('showcolumn', 'col_10');
+                    $("#SumContainer").jqxGrid('showcolumn', 'col_11');
+                }
+                
+                //$("#SumContainer").jqxGrid('showcolumn', 'col_21');
+                //$("#SumContainer").jqxGrid('showcolumn', 'col_22');
+
+                $('#Syn_Pay_FromDate').prop('disabled', false);
+                $('#Syn_Pay_ToDate').prop('disabled', false);
+                $('#Syn_Pay_FromDate').val('');
+                $('#Syn_Pay_ToDate').val('');
+                //$('#Syn_Pay').show();
+                $('#Status_Acc').prop('disabled', false).trigger("chosen:updated");
+            }else {
+                $("#SumContainer").jqxGrid('hidecolumn', 'col_4');
+                $("#SumContainer").jqxGrid('hidecolumn', 'col_5');
+                $("#SumContainer").jqxGrid('hidecolumn', 'col_10');
+                $("#SumContainer").jqxGrid('hidecolumn', 'col_11');
+                //$("#SumContainer").jqxGrid('hidecolumn', 'col_21');
+                //$("#SumContainer").jqxGrid('hidecolumn', 'col_22');
+
+                $('#Syn_Pay_FromDate').prop('disabled', true);
+                $('#Syn_Pay_ToDate').prop('disabled', true);
+                $('#Syn_Pay_FromDate').val('');
+                $('#Syn_Pay_ToDate').val('');
+                //$('#Syn_Pay').hide();
+                $('#Status_Acc').prop('disabled', true).trigger("chosen:updated");
+            }
+            //$("#SumContainer").jqxGrid('endupdate');
+            $.ajax({
+                url: '/Report/ChangePC',
+                type: 'post',
+                data: {
+                    service: check,
+                    index :0,
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $("#PC").empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#PC").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#PC").trigger('chosen:updated');
+                        $("#PC").change();
+                    } else {
+                        $("#PC").empty();
+                        $("#PC").append("<option value='" + " " + "'>" + " " + "</option>");
+                        $("#PC").trigger('chosen:updated');
+                        $("#PC").change();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi kết nối';
+                    $('#error').modal('show');
+                }
+            });
+            
+        });
+        $('#AccParent').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccParent option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccChild').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccChild").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccChild").multiselect('rebuild');
+                    } else {
+                        $('#AccChild').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        var cellclass = function (row) {
+            var index = $("#SumContainer").jqxGrid('getrowdata', row).col_23;
+            if (index === "1")
+                return 'red';
+            else if (index === "2")
+                return 'green';
+            else if (index === "3")
+                return 'blue';
+            else if (index === "4")
+                return 'pink';
+            else if (index === "5")
+                return 'yellow';
+            else if (index === '6')
+                return 'coral';
+            else if (index === '7')
+                return 'lavender';
+            else if (index === '9')
+                return 'turquoise';
+            else
+                return 'lightslateblue';
+        }
+        $('#SumContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Báo cáo tổng hợp</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Chi tiết lỗi" onclick="checkCNN(\'' + 0 + '\')">' +
+                    '<img src="/images/list_metro.png" style="padding-bottom: 2px;"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Chi tiết hoàn trả</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Số ví', dataField: 'col_1', width: '10%', align: 'center', cellsalign: 'left', pinned: true },
+                { text: 'Thu ngân viên', dataField: 'col_20', width: '15%', align: 'center', cellsalign: 'left', pinned: true },
+                { text: 'Số GD', dataField: 'col_21', columngroup: 'TKTD', width: '7%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Số tiền', dataField: 'col_22', columngroup: 'TKTD', width: '7%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Số GD', dataField: 'col_2', columngroup: 'Paid', width: '7%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_3', columngroup: 'Paid', width: '11%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Số GD', dataField: 'col_4', columngroup: 'ProcessPendingDebit', width: '7%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_5', columngroup: 'ProcessPendingDebit', width: '11%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Số GD', dataField: 'col_10', columngroup: 'WaitProcess', width: '7%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_11', columngroup: 'WaitProcess', width: '11%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Số GD', dataField: 'col_14', columngroup: 'Cancel', width: '7%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_15', columngroup: 'Cancel', width: '11%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Số GD', dataField: 'col_16', columngroup: 'TotalCollected', width: '7%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_17', columngroup: 'TotalCollected', width: '11%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng GD', dataField: 'col_18', columngroup: 'Total', width: '7%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_19', columngroup: 'Total', width: '11%', align: 'center', cellsalign: 'right', cellclassname: cellclass }
+            ],
+            columngroups: [
+                { text: 'Nạp TKTD', align: 'center', name: 'TKTD' },
+                { text: 'Thành công', align: 'center', name: 'Paid' },
+                { text: 'Đang xử lý', align: 'center', name: 'ProcessPendingDebit' },
+                { text: 'Nghi ngờ chưa xử lý', align: 'center', name: 'WaitProcess' },
+                { text: 'Hủy', align: 'center', name: 'Cancel' },
+                { text: 'Hoàn trả', align: 'center', name: 'TotalCollected' },
+                { text: 'Tổng Thu', align: 'center', name:'Total'}
+            ]
+        });
+        $('#btnSearchSummaryReport').click(function () {
+            var option = $('#Service option:selected').val();           
+            $('.loading').show();                
+            $.ajax({
+                url: '/Report/SearchPointCollection',
+                type: 'post',
+                data: {
+                    option: option,
+                    pcCode: $("#PC option:selected").val(),
+                    pcName: $("#PC option:selected").text(),
+                    Account: $('#AccParent option:selected').text(),
+                    ListAcc: getChildSelected(1),
+                    Pay_FromDate: $('#Syn_Pay_FromDate').val(),
+                    Pay_ToDate: $("#Syn_Pay_ToDate").val(),
+                    Upload_FromDate: $('#Syn_Upload_FromDate').val(),
+                    Upload_ToDate: $('#Syn_Upload_ToDate').val(),
+                    status_Acc: $('#Status_Acc option:selected').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_sum').val(data.id);
+                        $('#fromdate_sum').val(data.fromdate);
+                        $('#todate_sum').val(data.todate);
+                        $('#pc_sum').val(data.pc);
+                        $('#id_service').val(data.service);
+                        dataSum = data.Records;
+                        $("#SumContainer").jqxGrid('refresh');
+                        $("#SumContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(dataSum)) });
+                        $('#btnExportSummaryReport').prop('disabled', false);
+                    } else {
+                        $('#id_sum').val('');
+                        $('#fromdate_sum').val('');
+                        $('#todate_sum').val('');
+                        $('#pc_sum').val('');
+                        $('#id_service').val('');
+                        $('#btnExportSummaryReport').prop('disabled', true);
+                        $('#SumContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });            
+        });
+        $('#idDetailReportEVN').click(function () {
+            checkCNN(4);
+        });
+        $('#idDetaiReportlWater').click(function () {
+            checkCNN(5);            
+        });  
+    });    
+    function checkCNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+                else {
+                    if (index == 0) {
+                        if ($('#id_sum').val()) {
+                            $.ajax({
+                                type: 'get',
+                                url: '/Report/_DetailError',
+                                success: function (data) {
+                                    $('#dynamic-modal').html(data);
+                                    $("#dynamic-modal").modal('show');
+                                },
+                                error: function (ErrorThrown) {
+                                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                    $('#error').modal('show');
+                                }
+                            });
+                        }
+                    }else if (index == 1) {
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Report/ExportCollectionPoint?id=' + encodeURI($('#id_sum').val()) + '&service=' + encodeURI($('#id_service').val()) + '&pc=' + encodeURI($('#pc_sum').val()) +
+                                '&fromdate='+ encodeURI($('#fromdate_sum').val()) + '&todate='+ encodeURI($('#todate_sum').val());
+                        }
+                    }else if(index == 2) {
+                        if ($('#id_detailEVN').val()) {
+                            window.location.href = '/Report/ExportDetailEVN?id=' + encodeURI($('#id_detailEVN').val());
+                        }
+                    } else if(index == 3) {
+                        if ($('#id_DetailWater').val()) {
+                            window.location.href = '/Report/ExportDetailWater?id=' + encodeURI($('#id_DetailWater').val()) + '&fromdate=' + encodeURI($('#id_fromdate').val()) +
+                                '&todate=' + encodeURI($('#id_todate').val()) + '&total_trans=' + encodeURI(document.getElementById("total_tran_water").innerText) +
+                                '&total_bill=' + encodeURI(document.getElementById("total_bill_water").innerText) + '&total_amount=' + encodeURI(document.getElementById("total_amount_water").innerText) +
+                                '&pc=' + encodeURI($('#id_pccode').val()) + '&service='+encodeURI($('#id_service_orther').val());
+                        }
+                    } else if (index == 4) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Report/_DetailReportEVN',
+                            data: {
+                                // edong: id_check
+                            },
+                            success: function (data) {
+                                $('#DetailReportEVN').html(data);
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Report/_DetailReportWater',
+                            data: {
+                                //edong: id_check
+                            },
+                            success: function (data) {
+                                $('#DetaiReportlWater').html(data);
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } 
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceSum(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }       
+
+    function getChildSelected(index) {
+        var obj = [];
+        if (index == 1) {
+            var selected = $("#AccChild option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        } else if (index == 2) {
+            var selected = $("#AccChild_Water option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        } else if(index == 3){
+            var selected = $("#AccChild_Topup option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        }else {
+            var selected = $("#AccChild_EVN option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        }
+        if (obj.length > 0) {
+            return JSON.stringify(obj);
+        }
+        else
+            return null;
+    }
+</script>

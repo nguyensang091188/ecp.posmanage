@@ -1,0 +1,244 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    ePosAccount tempPosAcc = new ePosAccount();
+    List<ObjEVNPC> dataPC_HP = new List<ObjEVNPC>();
+    List<ObjEVNPC> dataPC_KH = new List<ObjEVNPC>();
+    List<ObjEVNPC> dataPC_HCM = new List<ObjEVNPC>();
+    List<ObjEVNPC> dataNPC = new List<ObjEVNPC>();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+        if (ePOSSession.GetObject(posAccount.session) != null)
+        {
+            tempPosAcc = (ePosAccount)ePOSSession.GetObject(posAccount.session);
+            dataPC_HP = (from x in tempPosAcc.EvnPC where x.ext.StartsWith("PH") select x).ToList();
+            dataPC_KH = (from x in tempPosAcc.EvnPC where x.ext.StartsWith("PQ") select x).ToList();
+            dataPC_HCM = (from x in tempPosAcc.EvnPC where x.ext.StartsWith("PE") select x).ToList();
+            dataNPC = (from x in tempPosAcc.EvnPC where x.ext.StartsWith("PA") || x.ext.StartsWith("PH") select x).ToList();
+        }
+        else
+        {
+            Logging.EPOSLogger.ErrorFormat("ManagerMenu => User: {0}, Error: Phiên làm việc không tồn tại, Session: {1}", posAccount.edong, posAccount.session);
+            <script>
+                $(function () {
+                    window.location.href = '/ePOS/Login';
+                });
+            </script>
+            return;
+        }
+    }
+    else
+    {
+        <script>
+            $(function () {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+
+        return;
+    }
+}
+
+<div class="col-md-3 left_col">
+    <div class="left_col scroll-view">
+
+        <div class="navbar nav_title" style="border: 0;">
+            <a href="#" class="site_title">
+                <img src="~/images/favicon.png" />@*<i class="fa fa-bolt"></i>*@ <span style="font-size:medium;">@ViewBag.TitleLeft</span>
+            </a>
+        </div>
+        <div class="clearfix"></div>
+        <br />
+        <!-- sidebar menu -->
+        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+            <div class="menu_section">
+                <ul class="nav side-menu">
+                    <li>
+                        <a><i class="fa fa-user"></i>Thông tin tài khoản <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu " style="display: none">
+                            <li>
+                                <a href="@Url.Action("Account", "ePOS")">Thông tin tài khoản</a>
+                            </li>
+                            <li>
+                                <a href="@Url.Action("ChangePassword", "ePOS")">Đổi mật khẩu</a>
+                            </li>
+                        </ul>
+                    </li>
+                    @if (posAccount.type == 5 || posAccount.type == -1)
+                    {
+                        <li>
+                            <a><i class="fa fa-book"></i>Khách hàng<span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu " style="display: none">
+                                <li>
+                                    <a href="@Url.Action("DebtList", "Accountant" )">Danh sách khách hàng</a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    @if (posAccount.type != 5)
+                    {
+                        <li>
+                            <a><i class="fa fa-edit"></i>Nhập File<span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu " style="display: none">
+                                <li>
+                                    <a href="@Url.Action("Bill", "Import" )">Hóa đơn giao thu</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("EVNBillPayment", "Import" )">Chấm nợ</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("MapBookCMIS", "Import" )">Gán giao thu</a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    <li>
+                        <a onclick="checkRole()"><i class="fa fa-bar-chart-o"></i>Báo Cáo<span class="fa fa-chevron-down"></span></a>
+                        @if (posAccount.type != 5)
+                        {
+                            <ul class="nav child_menu " style="display: none">
+                                <li>
+                                    <a href="@Url.Action("PointCollection", "Report" )">Dịch vụ thu hộ</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("EdongCash", "Report" )">Tài khoản ví</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("CheckDebt", "Report" )">Tồn</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("DeliverySPC", "Report" )">Giao thu SPC</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("DebtReliefSPC", "Report" )">Gạch nợ SPC</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("WarningAssign", "Report" )">Hạn mức</a>
+                                </li>
+                                @if (tempPosAcc.EvnPC.Count != 0)
+                                {
+                                    <li>
+                                        <a href="@Url.Action("CardIdentifier", "Report" )">Định danh thẻ</a>
+                                    </li>
+                                }
+                                <li>
+                                    <a href="@Url.Action("HistoryTranfer", "Report" )">Lịch sử giao dịch</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("PrepaidElectricity", "Report" )">Tiền điện trả trước</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("EdongSales", "Report" )">Doanh số</a>
+                                </li>
+                            </ul>
+                        }
+                    </li>
+                    <li>
+                        <a onclick="checkRole()"><i class="fa fa-users"></i>Quản lý<span class="fa fa-chevron-down"></span></a>
+                        @if (posAccount.type != 5)
+                        {
+                            <ul class="nav child_menu " style="display: none">
+                                <li>
+                                    <a href="@Url.Action("Account", "Manager" )">Người dùng</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("BookCMIS", "Manager" )">Sổ ghi chỉ số</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("CancelRequest", "Manager" )">Yêu cầu hủy</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("TransferSurvive", "Manager" )">Chuyển tồn</a>
+                                </li>
+                                @*@if (dataPC_HP != null)
+                                        {
+                                                            <li>
+                                                                <a href="@Url.Action("EVNHP", "Manager" )">PC Hải Phòng</a>
+                                                            </li>
+                                    }
+                                                                @if (dataPC_KH != null)
+                                        {
+                                                            <li>
+                                                                <a href="@Url.Action("EVNKH", "Manager" )">PC Khánh Hòa</a>
+                                                            </li>
+                                    }*@
+                                @if (dataPC_HCM != null)
+                                {
+                                    <li>
+                                        <a href="@Url.Action("EVNHCM", "Manager" )">PC Hồ Chí Minh</a>
+                                    </li>
+                                }
+                                @*<li>
+                                        <a href="@Url.Action("BillHandling", "Manager" )">Hóa đơn đang xử lý</a>
+                                    </li>*@
+                                <li>
+                                    <a href="@Url.Action("BillHandling_2", "Manager" )">Hóa đơn đang xử lý</a>
+                                </li>
+                                <li>
+                                    <a href="@Url.Action("Withdraw_CashWallet", "Manager" )">Hạn mức ví quầy</a>
+                                </li>
+                                @if (dataNPC != null)
+                                {
+                                    <li>
+                                        <a href="@Url.Action("ControlDebtNPC", "Manager" )">Chấm nợ NPC</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("ControlDebtGCS","Manager")">Kiểm soát chấm nợ</a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </li>
+                    @if (posAccount.type == -1 || posAccount.type == 5)
+                    {
+                        <li>
+                            <a onclick="checkRole()"><i class="fa fa-gears"></i>Hỗ trợ<span class="fa fa-chevron-down" /> </a>
+                            @if (posAccount.type == -1)
+                            {
+                                <ul class="nav child_menu " style="display: none">
+                                    <li>
+                                        <a href="@Url.Action("EVNPC", "Help" )">Quản lý PC</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("Account", "Help" )">Quản lý đăng nhập</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("SearchBill", "Help" )">Thông tin hóa đơn</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("SetParam", "Help" )">Thiết lập hệ thống</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("FinancialServices", "Help" )">Thiết lập QLDV Tài chính</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("ControlDebt", "Help" )">Kiểm soát chấm nợ</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("JobControl", "Help" )">Đối soát</a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("LogViewE", "Help" )">Quản lý log nghiệp vụ</a>
+                                    </li>
+                                </ul>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function checkRole() {
+        if ('@posAccount.type' == '5')
+        {
+            document.getElementById('msg_error').innerHTML = 'Bạn ko có quyền truy cập';
+            $('#error').modal('show');
+        }
+    }
+</script>

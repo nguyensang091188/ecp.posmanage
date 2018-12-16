@@ -1,0 +1,162 @@
+﻿@{  
+    if (Request.Cookies[".ASPXAUTH"] == null)
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<br />
+<form class="form-horizontal form-label-left input_mask">
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm- col-xs-12">Mã điện lực:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            <input type="text" id="PCCode" class="form-control" maxlength="100">
+        </div>
+    </div>   
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <div class="col-md-4 col-sm-4 col-xs-4 text-left ">
+            <button type="button" id="btnSearch_PC" class="btn btn-success">Tìm kiếm</button>
+
+        </div>
+    </div>
+</form>
+<div id="PCContainer"></div>
+<script type="text/javascript">
+    var dataListPC = null;
+    $(document).ready(function () {
+        $("#PCContainer").jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách điện lực của ví: " + '@ViewBag.parent ' + " </h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Mã PC', dataField: 'ext', width: '70px', cellsalign: 'left', align: 'center' },
+                { text: 'Tên đầy đủ', dataField: 'fullName', width: '325px', cellsalign: 'left', align: 'center' },
+                { text: 'Tên viết tắt', dataField: 'shortName', width: '110px', cellsalign: 'left', align: 'center' },
+                { text: 'Địa chỉ', dataField: 'address', cellsalign: 'left', align: 'center' },
+                {
+                    text: 'Trạng thái', dataField: 'status', width: '110px', align: 'center', cellsalign: 'left',
+                    cellsrenderer: function (row, columnfield, value) {
+                        if (value == 1) {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Đã triển khai</div>';
+                        } else {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Chưa triển khai</div>';
+                        }
+                    }
+                },
+                {
+                    text: ' ', width: '3%', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                ' onclick="DelMappingEVNPC(\'' + row + '\' )" >' +
+                                '<img src="/images/icon_del.png" title="Xóa điện lực"/></a></div>';
+                    }
+                }
+            ]
+        });
+        getPC();
+        $('#btnSearch_PC').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/GetPCByEdong',
+                type: 'post',
+                data: {
+                    edong: '@ViewBag.parent',
+                    pcCode: $('#PCCode').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == 'SUCCESS') {
+                        dataListPC = data.Records;
+                        $("#PCContainer").jqxGrid('refresh');
+                        $("#PCContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceListPC(dataListPC)) });
+                    } else {
+                        dataListPC = null;
+                        $("#PCContainer").jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function DelMappingEVNPC(cellValue) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    document.getElementById('msg_yesno').innerHTML = 'Điện lực này sẽ bị xóa! Bạn có chắc không?';
+                    $("#yesno").data('index', 7);
+                    $('#yesno').data('cellValue', cellValue);
+                    $('#yesno').data('edong', '@ViewBag.parent');
+                    $('#yesno').modal('show');                    
+                }
+            },
+            error: function (errorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function getPC() {
+        $('.loading').show();
+        $.ajax({
+            url: '/Manager/GetPCByEdong',
+            type: 'post',
+            data: {
+                edong: '@ViewBag.parent',
+            },
+            success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                if (data.Result == 'SUCCESS') {
+                    dataListPC = data.Records;
+                    $("#PCContainer").jqxGrid('refresh');
+                    $("#PCContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceListPC(dataListPC)) });
+                } else {
+                    dataListPC = null;
+                    $("#PCContainer").jqxGrid('clear');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (errorThrown) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceListPC(data) {
+        var source =
+        {
+            id: 'code',
+            localData: data,
+        };
+        return source;
+    }
+</script>

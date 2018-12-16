@@ -1,0 +1,100 @@
+﻿
+<style type="text/css">
+
+    textarea {
+        width: 100%;
+        padding: 4px 7px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #fff;
+        color: #333;
+        margin-bottom: 7px;
+    }
+    .modal-displaycode pre {
+        outline: 1px solid #ccc;
+        padding: 5px;
+        margin: 5px;
+    }
+
+    .modal-displaycode .string {
+        color: green;
+    }
+
+    .modal-displaycode .number {
+        color: darkorange;
+    }
+
+    .modal-displaycode .boolean {
+        color: blue;
+    }
+
+    .modal-displaycode .null {
+        color: magenta;
+    }
+
+    .modal-displaycode .key {
+        color: red;
+    }
+</style>
+<div class="modal-dialog modal-sm" style="width:900px; ">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Chi tiết Request/Respone</h5>
+        </div>
+        <div class="modal-body modal-displaycode">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-12 col-sm-4 col-xs-12">Request:</label>
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <pre id="pre_request"></pre>
+                        <textarea id="ta_request" rows="12"></textarea>
+                        <input type="hidden" id="json_request" value="@ViewBag.request" />
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-12 col-sm-4 col-xs-12">Response: </label>
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <pre id="pre_response"></pre>
+                        <textarea id="ta_response" rows="12"></textarea>
+                        <input type="hidden" id="json_response" value="@ViewBag.response" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var json_request = $("#json_request").val();
+        var json_response = $("#json_response").val();
+        $("#pre_request").html(syntaxHighlight(json_request));
+        $("#pre_response").html(syntaxHighlight(json_response));
+        $("#ta_request").html(json_request);
+        $("#ta_response").html(json_response);
+       
+
+       // document.getElementById('debug').appendChild(ppTable);
+    });
+
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+</script>

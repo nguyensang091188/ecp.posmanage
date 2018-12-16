@@ -1,0 +1,333 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ManagerAccModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#AddBookCMIS" data-toggle="tab">Quản lý ví</a></li>
+                <li class="nav-item" style="display: none;" id="idMappingEdong"><a href="#MappingEdong" data-toggle="tab" >Gán ví con</a></li>
+                <li class="nav-item" style="display: none;" id="idListPC"><a href="#ListPC" data-toggle="tab">Danh sách điện lực</a></li>
+                <li class="nav-item" style="display: none;" id="idMappingEVNPC" ><a href="#MappingEVNPC" data-toggle="tab">Gán điện lực</a></li>
+                <li class="nav-item" style="display: none;" id="idListBookCMIS" ><a href="#ListBookCMIS" data-toggle="tab">Danh sách giao thu</a></li>
+                @*<li class="nav-item" style="display: none;" id="idMappingBookCMIS" ><a href="#MapBookCMIS" data-toggle="tab">Gán giao thu</a></li>*@   
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="AddBookCMIS">                  
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm- col-xs-12">Số ví:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Edong" class="form-control" maxlength="20">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Họ tên:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="FullName" class="form-control" maxlength="300">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status, Model.StatusList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Cấp:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">                                
+                                <label class="radio-inline"><input type="radio" id="lerver_acc" name="lever" checked="checked" value="0">Tất cả</label>
+                                <label class="radio-inline"><input type="radio" id="lerver_acc" name="lever" value="1">Cấp 1</label>
+                            </div>
+                        </div> 
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <div class="col-md-12 col-sm-12 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchEdong" class="btn btn-success">Tìm kiếm</button>
+
+                            </div>
+                        </div>                      
+                    </form>
+                    <div id="treeGrid"></div>
+                </div>  
+                <div id="MappingEdong" class="tab-pane"></div>
+                <div id="ListPC" class="tab-pane"></div>
+                <div id="MappingEVNPC" class="tab-pane"></div>
+                <div id="ListBookCMIS" class="tab-pane"></div>
+                @*<div id="MapBookCMIS" class="tab-pane"></div>*@
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var datasource = null;
+    var id_check = null;
+    $(document).ready(function () {
+        $("#treeGrid").jqxTreeGrid({
+            width: '100%',
+            pagerHeight: 35,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách ví edong</h4></div>");
+                toolbar.append(container);
+            },
+            sortable: false,
+            pageable: true,
+            pagerMode: 'advanced',
+            checkboxes: true,
+            showToolbar: true,
+            pageSize: 50,
+            pageSizeOptions: ['50', '100', '200', '300', '500'],
+
+            columns: [
+                { text: 'Số ví', dataField: 'phoneNumber' },
+                { text: 'Họ tên', dataField: 'name', width: '15%' },
+                { text: 'Địa chỉ', dataField: 'address', width: '45%' },
+                //{ text: 'Số CMND', dataField: 'IdNumber', width: '15%' },
+                {
+                    text: ' ', width: '3%', cellsrenderer: function (row) {
+                        if (row != '@posAccount.edong')
+                            return '<div style="text-align: center;"><a href="#" class="navbutton"' +
+                                ' onclick="checkCNN(\'' + row + '\',\'' + 1 + '\' )" >' +
+                                '<img src="/images/icon_edit.png" title="Cập nhật thông tin ví"/></a></div>';
+                    }
+                },
+                {
+                    text: ' ', width: '3%', cellsrenderer: function (row) {
+                        if (row != '@posAccount.edong')
+                            return '<div style="text-align: center;"><a href="#" class="navbutton"' +
+                                ' onclick="checkCNN(\'' + row + '\',\'' + 0 + '\')" >' +
+                                '<img src="/images/icon_del.png" title="Xóa ví"/></a></div>';
+                    }
+                }
+            ]
+        });
+        getTreeAcc();
+        $('#btnSearchEdong').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/SearchTreeAcc',
+                type: 'post',
+                data: {
+                    edong: $('#Edong').val(),
+                    status: $('#Status option:selected').val(),
+                    level: $('#lerver_acc:checked').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else {
+                        datasource = null;
+                        datasource = data.Records;
+                        $("#treeGrid").jqxTreeGrid('refresh');
+                        $("#treeGrid").jqxTreeGrid({ source: new $.jqx.dataAdapter(source(datasource)) });
+                        $("#treeGrid").jqxTreeGrid('expandAll');
+                    }
+                }, error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#treeGrid').on('rowCheck', function (event) {
+            if (id_check && id_check != event.args.key)
+                $("#treeGrid").jqxTreeGrid('uncheckRow', id_check);
+            id_check = event.args.key;
+            if ($("#treeGrid").jqxTreeGrid('getRow', event.args.key).type == '-1') {
+                $('#idMappingEdong').css("display", "none");
+                //$('#idMappingBookCMIS').css("display", "none");
+                $('#idListPC').css("display", "none");
+                $('#idListBookCMIS').css("display", "none");
+                $('#idMappingEVNPC').css("display", "none");
+            } else {
+                $('#idMappingEdong').css("display", "block");
+                if (id_check != '@posAccount.edong')
+                    $('#idMappingEVNPC').css("display", "block");
+                else
+                    $('#idMappingEVNPC').css("display", "none");
+                //$('#idMappingBookCMIS').css("display", "block");
+                $('#idListPC').css("display", "block");
+                $('#idListBookCMIS').css("display", "block");
+            }
+        });
+
+        $("#treeGrid").on('rowUncheck', function (event) {
+            $('#idMappingEdong').css("display", "none");
+            $('#idMappingEVNPC').css("display", "none");
+            //$('#idMappingBookCMIS').css("display", "none");
+            $('#idListPC').css("display", "none");
+            $('#idListBookCMIS').css("display", "none");
+        });
+        $('#idMappingEdong').click(function () {
+            $.ajax({
+                type: 'get',
+                url: '/Manager/_MapEdong',
+                data: {
+                    edong: id_check
+                },
+                success: function (data) {
+                    $('#MappingEdong').html(data);
+                },
+                error: function (ErrorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        });
+        $('#idListPC').click(function () {
+            $.ajax({
+                type: 'get',
+                url: '/Manager/_ListPC',
+                data: { edong: id_check },
+                success: function (data) {
+                    $('#ListPC').html(data);
+                },
+                error: function (ErrorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        });
+        $('#idMappingEVNPC').click(function () {
+            $.ajax({
+                type: 'get',
+                url: '/Manager/_MappingEVNPC',
+                data: { edong: id_check },
+                success: function (data) {
+                    $('#MappingEVNPC').html(data);
+                },
+                error: function (ErrorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        });
+        $('#idListBookCMIS').click(function () {
+            $.ajax({
+                type: 'get',
+                url: '/Manager/_ListBookCMIS',
+                data: { edong: id_check },
+                success: function (data) {
+                    $('#ListBookCMIS').html(data);
+                },
+                error: function (ErrorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        });
+    });
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Manager/_EditAccount',
+                            data: {
+                                _id: $("#treeGrid").jqxTreeGrid('getRow', cellValue).phoneNumber,
+                                _name: $("#treeGrid").jqxTreeGrid('getRow', cellValue).name ,
+                                _idnumber: $("#treeGrid").jqxTreeGrid('getRow', cellValue).idNumber ,
+                                _idnumberplace: $("#treeGrid").jqxTreeGrid('getRow', cellValue).idNumberPlace ,
+                                _idnumberdate: $("#treeGrid").jqxTreeGrid('getRow', cellValue).idNumberDate ,
+                                _address: $("#treeGrid").jqxTreeGrid('getRow', cellValue).address ,
+                                _email: $("#treeGrid").jqxTreeGrid('getRow', cellValue).email ,
+                                _type: $("#treeGrid").jqxTreeGrid('getRow', cellValue).type ,
+                                _phone: $("#treeGrid").jqxTreeGrid('getRow', cellValue).phone,
+                                _debtamount: $("#treeGrid").jqxTreeGrid('getRow', cellValue).debtAmount,
+                                _debtdate: $("#treeGrid").jqxTreeGrid('getRow', cellValue).DebtDate
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        document.getElementById('msg_yesno').innerHTML = 'Ví con này sẽ bị xóa khỏi quyền quản lý của bạn! Bạn có chắc không?';
+                        $("#yesno").data('index', 8);
+                        $('#yesno').data('cellValue', cellValue);
+                        $('#yesno').modal('show');
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function getTreeAcc() {
+        $('.loading').show();
+        $.ajax({
+            url: '/Manager/GetTreeAcc',
+            type: 'post',
+            data: {
+                edong: '@posAccount.edong'
+            },
+            success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                else {
+                    datasource = data.Records;
+                    $("#treeGrid").jqxTreeGrid('refresh');
+                    $("#treeGrid").jqxTreeGrid({ source: new $.jqx.dataAdapter(source(datasource)) });
+                    $("#treeGrid").jqxTreeGrid('expandAll');
+                }
+            },
+            error: function (ErrorThrown) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function source(data) {
+        var source =
+        {
+            hierarchy:
+            {
+                keyDataField: { name: 'phoneNumber' },
+                parentDataField: { name: 'parent' }
+            },
+            id: 'phoneNumber',
+            localData: data,
+        };
+        return source;
+    }
+</script>

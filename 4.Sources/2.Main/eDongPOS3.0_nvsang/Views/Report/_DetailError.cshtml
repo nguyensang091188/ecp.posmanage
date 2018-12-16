@@ -1,0 +1,72 @@
+﻿<div class="modal-dialog modal-sm" style="width:900px; height: 500px;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Chi tiết hoàn trả</h5>
+        </div>
+        <div class="modal-body">
+            <div id="GridBill"></div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var cellclass = function (row) {
+            var index = $("#GridBill").jqxGrid('getrowdata', row).col_23;
+            if (index === "1")
+                return 'red';
+            else if (index === "2")
+                return 'green';
+            else if (index === "3")
+                return 'blue';
+            else if (index === "4")
+                return 'pink';
+            else if (index === "5")
+                return 'yellow';
+            else if (index === '6')
+                return 'coral';
+            else if (index === '7')
+                return 'lavender';
+            else
+                return 'lightslateblue';
+        }
+        $("#GridBill").jqxGrid({
+            width: '100%',
+            height: '375px',
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: false,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Số ví', dataField: 'col_1', width: '15%', align: 'center', cellsalign: 'left', pinned: true },
+                { text: 'Số HĐ', dataField: 'col_6', columngroup: 'PaidOrtherSource', width: '8%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_7', columngroup: 'PaidOrtherSource', width: '14%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Số HĐ', dataField: 'col_8', columngroup: 'PaidOrtherWallets', width: '8%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_9', columngroup: 'PaidOrtherWallets', width: '13%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Số HĐ', dataField: 'col_12', columngroup: 'PaymentError', width: '8%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_13', columngroup: 'PaymentError', width: '13%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+                { text: 'Số HĐ', dataField: 'col_14', columngroup: 'Cancel', width: '8%', align: 'center', cellsalign: 'right', cellclassname: cellclass },
+                { text: 'Tổng tiền', dataField: 'col_15', columngroup: 'Cancel', width: '13%', cellsalign: 'right', align: 'center', cellclassname: cellclass },
+            ],
+            columngroups: [
+                { text: 'Đã TT bởi nguồn khác', align: 'center', name: 'PaidOrtherSource' },
+                { text: 'Đã TT bởi số ví khác', align: 'center', name: 'PaidOrtherWallets' },
+                { text: 'Từ chối lỗi', align: 'center', name: 'PaymentError' },
+                { text: 'Hủy', align: 'center', name: 'Cancel' },
+            ]
+        });
+        getDetail();
+    });
+    function getDetail() {
+        $("#GridBill").jqxGrid('refresh');
+        $("#GridBill").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(dataSum)) });
+    }
+</script>

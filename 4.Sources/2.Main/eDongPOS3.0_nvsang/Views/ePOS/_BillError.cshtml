@@ -1,0 +1,71 @@
+﻿<div class="modal-dialog modal-sm" style="width:900px; height: 500px;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Danh sách hóa đơn lỗi chưa xử lý trong tháng</h5>
+        </div>
+        <div class="modal-body">
+            <div id="BillErrorContainer"></div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        getDetail();
+        $('#BillErrorContainer').jqxGrid({
+            height: '430px',
+            width: '100%',           
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: false,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Mã khách hàng', dataField: 'col_1', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên khách hàng', dataField: 'col_2', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'col_3', width: '30%', cellsalign: 'left', align: 'center' },
+                { text: 'Số GCS', dataField: 'col_4', width: '10%', cellsalign: 'left', align: 'center' },
+                { text: 'Số tiền', dataField: 'col_5', width: '15%', cellsalign: 'right', align: 'center' },
+                { text: 'Kỳ HĐ', dataField: 'col_6', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Trạng thái', dataField: 'col_7', width: '15%', align: 'center', cellsalign: 'left' }
+            ],
+        });
+    });
+    function getDetail() {
+        $.ajax({
+            url: '/ePOS/DetailBill',
+            type: 'post',
+            success: function (data) {
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                if (data.Result == "SUCCESS") {
+                    $("#BillErrorContainer").jqxGrid('refresh');
+                    $("#BillErrorContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceBill(data.Records)) });
+                } else {
+                    // window.location.href = '@Url.Action("Login", "ePOS")';
+                    document.getElementById('msg-infor').style.font = "italic bold 20px time new roman,serif";
+                    document.getElementById('msg-infor').innerHTML = data.Message;
+                    $("#dialog-infor").dialog('open');
+                }
+            },
+            error: function () {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        })
+    };
+    function sourceBill(data) {
+        var source =
+        {
+            id: 'col_11',
+            localData: data,
+        };
+        return source;
+    }
+</script>

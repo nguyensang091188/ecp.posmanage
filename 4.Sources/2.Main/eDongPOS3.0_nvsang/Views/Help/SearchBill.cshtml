@@ -1,0 +1,432 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.SearchBillModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#LogOutAccount" data-toggle="tab">Danh sách HĐ</a></li>
+                <li class="nav-item"><a href="#SearchListEVN" data-toggle="tab">Tra cứu EVN</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="LogOutAccount">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.pcCode, Model.pcList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Sổ GCS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="BookCMIS" class="form-control" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="customer" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tên KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="name" class="form-control" maxlength="200">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Địa chỉ:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="address" class="form-control" maxlength="200">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Điện thoại KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="phone" class="form-control" maxlength="11">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã hóa đơn:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="billId" class="form-control" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tháng HĐ:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left monthfield" id="month" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.status, Model.statusList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12" style="margin-left:-9px;">Số tiền từ:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <input type="text" id="amount_from" class="form-control" maxlength="10">
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">đến:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <input type="text" id="amount_to" class="form-control" maxlength="10">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12" style="margin-left:-9px;">Phát hành từ ngày:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <fieldset>
+                                        <div class="control-group">
+                                            <div class="controls">
+                                                <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                    <input type="text" class="form-control has-feedback-left datefield" id="fromdate" aria-describedby="inputSuccess2Status">
+                                                    <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                    <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">đến ngày:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <fieldset>
+                                        <div class="control-group">
+                                            <div class="controls">
+                                                <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                    <input type="text" class="form-control has-feedback-left datefield" id="todate" aria-describedby="inputSuccess2Status">
+                                                    <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                    <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>
+                                <input type="hidden" id="id_bill" />
+                            </div>
+                        </div>
+
+                    </form>
+                    <div id="BillContainer"></div>
+                </div>
+                <div class="tab-pane" id="SearchListEVN">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH/Số thẻ:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <textarea id="areacustomer" name="areacustomer" class="form-control" rows="5" ></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 text-left ">
+                                <br/><br /><br /><br />
+                                <button type="button" id="btnSearchEVN" class="btn btn-success">Tìm kiếm</button>
+                                <input type="hidden" id="id_billEVN" />
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <br /><br /><br /><br />
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    @Html.DropDownListFor(m => m.statusEVN, Model.statusEVNList, new { @class = "form-control chosen-select" })
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                    <div id="BillEVNContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var dataBill = null;
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('.monthfield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#phone').forceNumeric();
+        $('#amount_from').forceNumeric();
+        $('#amount_to').forceNumeric();
+        $('#amount_from').keyup(function (event) {
+            if (event.which >= 37 && event.which <= 40) {
+                event.preventDefault();
+            }
+            var $this = $(this);
+            var num = $this.val().replace(/,/gi, "").split("").reverse().join("");
+            var num2 = RemoveRougeChar(num.replace(/(.{3})/g, "$1,").split("").reverse().join(""));
+            $this.val(num2);
+        });
+        $('#amount_to').keyup(function (event) {
+            if (event.which >= 37 && event.which <= 40) {
+                event.preventDefault();
+            }
+            var $this = $(this);
+            var num = $this.val().replace(/,/gi, "").split("").reverse().join("");
+            var num2 = RemoveRougeChar(num.replace(/(.{3})/g, "$1,").split("").reverse().join(""));
+            $this.val(num2);
+        });
+        $('#BillContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách hóa đơn</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Xuất danh sách HĐ ra định dạng excel" onclick="checkCNN(\'' + 1 + '\',\'' + 1 + '\' )">' +
+                    '<img src="/images/excel_2010.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer">Kết xuất</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: ' ', width: '3%', align: 'center', pinned: true, cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 0 + '\' )" >' +
+                            '<img src="/images/list_metro.png" title="Xem thông tin chi tiết"/></a></div>';
+                    }
+                },
+                { text: 'Mã GCS', dataField: 'col_1', width: '7%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Mã KH', dataField: 'col_2', width: '11%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Tên KH', dataField: 'col_3', width: '15%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'col_4', width: '25%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Mã HĐ', dataField: 'col_6', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tháng HĐ', dataField: 'col_7', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'col_12', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Trạng thái HĐ', dataField: 'col_8', width: '15%', align: 'center', cellsalign: 'left' }
+            ]
+        });
+        $('#btnSearch').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchBillForStore',
+                type: 'post',
+                data: {
+                    pccode: $('#pcCode option:selected').val(),
+                    billId: $('#billId').val(),
+                    customer: $('#customer').val(),
+                    name: $('#name').val(),
+                    address: $('#address').val(),
+                    bookCMIS: $('#BookCMIS').val(),
+                    status: $('#status option:selected').val(),
+                    phone: $('#phone').val(),
+                    from_date: $('#fromdate').val(),
+                    to_date: $('#todate').val(),
+                    amount_from: $('#amount_from').val(),
+                    amount_to: $('#amount_to').val(),
+                    month: $('#month').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_bill').val(data.id);
+                        dataBill = data.Records;
+                        $("#BillContainer").jqxGrid('refresh');
+                        $("#BillContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataBill)) });
+                        
+                    } else {
+                        dataBill = null;
+                        $('#id_bill').val('');
+                        $('#BillContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    $('#BillEVNContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách hóa đơn</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Xuất danh sách HĐ ra định dạng excel" onclick="checkCNN(\'' + 2 + '\',\'' + 2 + '\' )">' +
+                    '<img src="/images/excel_2010.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer">Kết xuất</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+        columns: [
+                { text: 'Mã KH', dataField: 'col_2', width: '11%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Mã thẻ', dataField: 'col_11', width: '11%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Tên KH', dataField: 'col_3', width: '12%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'col_4', width: '22%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'SĐT EVN', dataField: 'col_5', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'SĐT Ecpay', dataField: 'col_6', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Trạng thái', dataField: 'col_8', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Tháng nợ', dataField: 'col_9', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Số tiền', dataField: 'col_10', width: '8%', align: 'center', cellsalign: 'left' },
+            ]
+        });
+        $('#btnSearchEVN').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchBillForEVN',
+                type: 'post',
+                data: {
+                    customer: $('#areacustomer').val(),
+                    status: $('#statusEVN option:selected').val(),
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        if (data.isMessage == "1") {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                        $('#id_billEVN').val(data.id);
+                        dataBill = data.Records;
+                        $("#BillEVNContainer").jqxGrid('refresh');
+                        $("#BillEVNContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataBill)) });
+                    } else {
+                        dataBill = null;
+                        $('#id_billEVN').val('');
+                        $('#BillEVNContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+        });
+    });
+    function source(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) {
+                        if ($('#id_bill').val()) {
+                            window.location.href = '/Help/ExportBill?id=' + encodeURI($('#id_bill').val());
+                        }
+                    }else if (index == 2) {
+                        if ($('#id_billEVN').val()) {
+                            window.location.href = '/Help/ExportBillEVN?id=' + encodeURI($('#id_billEVN').val());
+                        }
+                    } else {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_DetailSearchBill',
+                            data:{row: cellValue},
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

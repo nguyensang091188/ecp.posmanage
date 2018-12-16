@@ -1,0 +1,696 @@
+﻿<div class="modal" id="yesno" style= "margin-top:100px; ">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h5 class="modal-title">Thông báo</h5>
+            </div>
+            <div class="modal-body">
+                <p id="msg_yesno"></p>
+            </div>
+            <div class="modal-footer">                
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Bỏ qua</button>
+                <button type="button" class="btn btn-success" id="btnYes">Chấp nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#btnYes').click(function () {
+            var index = $('#yesno').data('index');
+            var cellValue = $('#yesno').data('cellValue');
+            //if (index != null && index != '' && index.toString().length > 0) {
+                $('#yesno').modal('hide');
+                $('.loading').show();
+            if (index == 0) {
+                //alert(index);
+                $('.loading').hide();
+                window.location.href = '@Url.Action("LogOff", "ePOS")';
+            } else if (index == 1) {
+                $.ajax({
+                    url: '/Manager/DelDebtNPC',
+                    type: 'post',
+                    data: {
+                        id: cellValue,
+                        datasource: JSON.stringify(dataControlDebt)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataControlDebt = data.Records;
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 1);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 2) {
+                $.ajax({
+                    url: '/Manager/DelAllDebtNPC',
+                    type: 'post',
+                    data: {
+                        bill: cellValue,
+                        datasource: JSON.stringify(dataControlDebt)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataControlDebt = data.Records;
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 1);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 3) {
+                $.ajax({
+                    url: '/Manager/DelBildHandling',
+                    type: 'post',
+                    data: {
+                        id: cellValue,
+                        datasource: $('#id_sum').val(),
+                        curentpage: $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 2);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 4) {
+                $.ajax({
+                    url: '/Manager/UpdateStatusTransOff',
+                    type: 'post',
+                    data: {
+                        index: cellValue,
+                        datasource: $('#id_sum').val(),
+                        curentpage: $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum,
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataSum = data.Records;
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 2);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 5) {
+                $.ajax({
+                    url: '/Manager/UpdateAllStatusTransOff',
+                    type: 'post',
+                    data: {
+                        CustomerChoice: $('#BillHandlingContainer').jqxGrid('getselectedrowindexes').toString(),
+                        datasource: $('#id_sum').val(),
+                        pagenum: $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum,
+                        pagesize: $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagesize
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 2);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 6) {
+                $.ajax({
+                    url: '/Manager/doDelTransferSurvive',
+                    type: 'post',
+                    data: {
+                        index: row,
+                        datasource: JSON.stringify(dataTranfer),
+                        id: $("#TranferContainer").jqxGrid('getrowdata', row).col_9
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataTranfer = data.Records
+                            $("#TranferContainer").jqxGrid('refresh');
+                            $("#TranferContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceTrafer(dataTranfer)) });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 7) {
+                $.ajax({
+                    url: '/Manager/DelMappingEVNPC',
+                    type: 'post',
+                    data: {
+                        pccode: $("#PCContainer").jqxGrid('getrowdata', cellValue).ext,
+                        edong: $('#yesno').data('edong'),
+                        datasource: JSON.stringify(dataListPC)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataListPC = null;
+                            dataListPC = data.Records;
+                            $("#PCContainer").jqxGrid('refresh');
+                            $("#PCContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceListPC(dataListPC)) });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 8) {
+                for (var i = 0; i < datasource.length; i++) {
+                    if (datasource[i].phoneNumber == cellValue) {
+                        $.ajax({
+                            url: '/Manager/DelMergeAccount',
+                            type: 'post',
+                            data: {
+                                child: cellValue,
+                                parent: datasource[i].parent,
+                                datasource: JSON.stringify(datasource)
+                            },
+                            success: function (data) {
+                                $('.loading').hide();
+                                if (data.isRedirect)
+                                    window.location.href = data.redirectUrl;
+                                else if (data.Result == 'SUCCESS') {
+                                    datasource = data.Records;
+                                    $("#treeGrid").jqxTreeGrid('refresh');
+                                    $("#treeGrid").jqxTreeGrid({ source: new $.jqx.dataAdapter(source(datasource)) });
+                                    $("#treeGrid").jqxTreeGrid('expandAll');
+                                } else {
+                                    document.getElementById('msg_error').innerHTML = data.Message;
+                                    $('#error').modal('show');
+                                }
+                            },
+                            error: function (ErrorThrown) {
+                                $('.loading').hide();
+                                window.location.href = '@Url.Action("Login", "ePOS")';
+                            }
+                        })
+                    }
+                }
+            } else if (index == 9) {
+                $.ajax({
+                    url: '/Help/Lock_Unlock',
+                    type: 'post',
+                    data: {
+                        id: cellValue,
+                        datasource: JSON.stringify(dataAccount)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataAccount = data.Records;
+                            //$("#AccountContainer").jqxGrid('refresh');
+                            //$("#AccountContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceAcc(dataAccount)) });
+                            //$('#AccountContainer').jqxGrid('selectrow', cellValue);
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').data('index', 5);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 10) {
+                $.ajax({
+                    url: '/Help/Logout',
+                    type: 'post',
+                    data: {
+                        id: cellValue,
+                        datasource: JSON.stringify(dataAccount)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect) {
+                            window.location.href = data.redirectUrl;
+                        }
+                        if (data.Result == 'SUCCESS') {
+                            dataAccount = data.Records;
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').data('index', 5);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 11) {
+                $.ajax({
+                    url: '/Help/DelAllDebt',
+                    type: 'post',
+                    data: {
+                        bill: cellValue,
+                        datasource: JSON.stringify(dataControlDebt)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataControlDebt = data.Records;
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 1);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 12) {
+                $.ajax({
+                    url: '/Help/DelDebt',
+                    type: 'post',
+                    data: {
+                        id: cellValue,
+                        datasource: JSON.stringify(dataControlDebt)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataControlDebt = data.Records;
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 1);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 13) {
+                var i_index = $('#yesno').data('index');
+                $.ajax({
+                    url: '/Help/doChangeStatus',
+                    type: 'post',
+                    data: {
+                        index: $('#yesno').data('row'),
+                        datasource: JSON.stringify(dataJob),
+                        status: $('#switch_' + $('#yesno').data('row')).val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else {
+                            if (data.Result == 'SUCCESS') {
+                                dataJob = data.Records
+                                document.getElementById('msg_info').innerHTML = data.Message;
+                                $("#info").data('index', 7);
+                                $("#info").data('row', i_index);
+                                $('#info').modal('show');
+                            } else {
+                                document.getElementById('msg_error').innerHTML = data.Message;
+                                $('#error').modal('show');
+                            }
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 14) {
+                var i_index = $('#yesno').data('index');
+                $.ajax({
+                    url: '/Help/doChangeAPIforAgent',
+                    type: 'post',
+                    data: {
+                        index: $('#yesno').data('row'),
+                        datasource: JSON.stringify(dataRole),
+                        status: $('#api' + $('#yesno').data('row')).val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else {
+                            if (data.Result == 'SUCCESS') {
+                                dataRole = data.Records
+                                document.getElementById('msg_info').innerHTML = data.Message;
+                                $("#info").data('index', 8);
+                                $("#info").data('row', i_index);
+                                $('#info').modal('show');
+                            } else {
+                                document.getElementById('msg_error').innerHTML = data.Message;
+                                $('#error').modal('show');
+                            }
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 15) {
+                $.ajax({
+                    url: '/Manager/DelBildHandling',
+                    type: 'post',
+                    data: {
+                        datasource: $('#id_sum').val(),
+                        index: cellValue,
+                        total_row: $("span.jtable-page-size-change").find("option:selected").text()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            $("#ListCustomerChoicedSave").val('');
+                            $("#ListCustomerChoiced").val('');
+                            $('#BillHandlingContainer').jtable('load', {
+                                index: '1',
+                                pcCode: $("#PCCode option:selected").val(),
+                                account: $("#Account option:selected").val(),
+                                customer: $("#Customer").val(),
+                                type: $("#Type option:selected").val(),
+                                status: $("#Status option:selected").val(),
+                                fromdate: $("#Fromdate").val(),
+                                fromtime: $('#Time_From').val(),
+                                todate: $("#Todate").val(),
+                                totime: $('#Time_To').val(),
+                                id: $('#id_sum').val(),
+                                curentpage: $('.jtable-page-number-active').text(),
+                                CustomerChoice: $("#ListCustomerChoiced").val()
+                            });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 16) {
+                $.ajax({
+                    url: '/Manager/UpdateStatusTransOff',
+                    type: 'post',
+                    data: {
+                        index: cellValue,
+                        datasource: $('#id_sum').val(),
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            var x = $('.jtable-page-number-active').text();
+                            $('.jtable-goto-page option[value="' + x + '"]').prop("selected", true).change();
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                })
+            } else if (index == 17) {
+                $.ajax({
+                    url: '/Manager/UpdateAllStatusTransOff',
+                    type: 'post',
+                    data: {
+                        datasource: $('#id_sum').val(),
+                        id: $('#ListCustomerChoicedSave').val(),
+                        choicepage: $('#ListCustomerChoiced').val(),
+                        curentpage: $('.jtable-page-number-active').text(),
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            $("#ListCustomerChoicedSave").val('');
+                            $("#ListCustomerChoiced").val('');
+                            $('#BillHandlingContainer').jtable('load', {
+                                index: '1',
+                                pcCode: $("#PCCode option:selected").val(),
+                                account: $("#Account option:selected").val(),
+                                customer: $("#Customer").val(),
+                                type: $("#Type option:selected").val(),
+                                status: $("#Status option:selected").val(),
+                                fromdate: $("#Fromdate").val(),
+                                fromtime: $('#Time_From').val(),
+                                todate: $("#Todate").val(),
+                                totime: $('#Time_To').val(),
+                                id: $('#id_sum').val(),
+                                curentpage: $('.jtable-page-number-active').text(),
+                                CustomerChoice: $("#ListCustomerChoiced").val(),
+                                //jtStartIndex: jtParams.jtStartIndex,
+                                //jtPageSize: jtParams.jtPageSize
+                            });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 18) {
+                $.ajax({
+                    url: '/Manager/UpdateAllStatusTransOff_2',
+                    type: 'post',
+                    data: {
+                        datasource: $('#id_sum').val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            $("#ListCustomerChoicedSave").val('');
+                            $("#ListCustomerChoiced").val('');
+                            $('#BillHandlingContainer').jtable('load', {
+                                index: '1',
+                                pcCode: $("#PCCode option:selected").val(),
+                                account: $("#Account option:selected").val(),
+                                customer: $("#Customer").val(),
+                                type: $("#Type option:selected").val(),
+                                status: $("#Status option:selected").val(),
+                                fromdate: $("#Fromdate").val(),
+                                fromtime: $('#Time_From').val(),
+                                todate: $("#Todate").val(),
+                                totime: $('#Time_To').val(),
+                                id: $('#id_sum').val(),
+                                curentpage: $('.jtable-page-number-active').text(),
+                                CustomerChoice: $("#ListCustomerChoiced").val(),
+                                //jtStartIndex: jtParams.jtStartIndex,
+                                //jtPageSize: jtParams.jtPageSize
+                            });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 19) {
+                $.ajax({
+                    url: '/Manager/doDelControlDebtGCS',
+                    type: 'post',
+                    data: {
+                        id: cellValue,
+                        datasource: JSON.stringify(dataControlDebtGCS)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataControlDebtGCS = null;
+                            dataControlDebtGCS = data.Records;
+                            $('#ControlDebtGCSContainer').jqxGrid('clearselection');
+                            $("#ControlDebtGCSContainer").jqxGrid('refresh');
+                            $("#ControlDebtGCSContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataControlDebtGCS)) });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 20) {
+                $.ajax({
+                    url: '/Manager/doDelAllControlDebtGCS',
+                    type: 'post',
+                    data: {
+                        id: cellValue,
+                        datasource: JSON.stringify(dataControlDebtGCS)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataControlDebtGCS = null;
+                            dataControlDebtGCS = data.Records;
+                            $('#ControlDebtGCSContainer').jqxGrid('clearselection');
+                            $("#ControlDebtGCSContainer").jqxGrid('refresh');
+                            $("#ControlDebtGCSContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataControlDebtGCS)) });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            } else if (index == 21) {
+                $.ajax({
+                    url: '/Help/doDel_API',
+                    type: 'post',
+                    data: {
+                        index: cellValue,
+                        datasource: JSON.stringify(dataAPI),
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == 'SUCCESS') {
+                            dataAPI = null;
+                            dataAPI = data.Records;
+                            $("#API_Contaier").jqxGrid('refresh');
+                            var dataadapter2 = new $.jqx.dataAdapter(sourceSumAPI(data));
+                            dataAPI = data.Records;
+                            $("#API_Contaier").jqxGrid({
+                                source: dataadapter2,
+                                virtualmode: true,
+                                rendergridrows: function () {
+                                    return dataadapter2.records;
+                                },
+                            });
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            }
+            //}
+        });
+    });
+</script>

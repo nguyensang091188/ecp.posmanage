@@ -1,0 +1,1156 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ReportPointCollectionModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#SummaryReport" data-toggle="tab">Tổng hợp</a></li>
+                <li class="nav-item"><a href="#DetailReport" data-toggle="tab">Chi tiết điện</a></li>
+                <li class="nav-item"><a href="#DetailWater" data-toggle="tab">Chi tiết nước</a></li>
+                <li class="nav-item"><a href="#DetailTopup" data-toggle="tab">Chi tiết Topup</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="SummaryReport">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Dịch vụ:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Service, Model.Services, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Nhà cung cấp:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Loại TK:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status_Acc, Model.StatusAccList, new { @class = "chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccParent, Model.ParentList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+
+                        @*<div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <input type="text" id="Customer" class="form-control" maxlength="15">
+                                </div>
+                            </div>*@
+                        @*<div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã GCS:  </label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <input type="text" id="Syn_GCS_Code" class="form-control" maxlength="15">
+                                </div>
+                            </div>*@
+
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccChild, Model.ChildList, new { @multiple = "multiple" })
+                            </div>
+                        </div>
+                        <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback" id="Syn_Pay">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Chấm nợ từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_FromDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_ToDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Thu từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_FromDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_ToDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchSummaryReport" class="btn btn-success">Tìm kiếm</button>
+                                <input type="hidden" id="id_sum" />
+                            </div>
+                        </div>
+                    </form>
+                    <div id="SumContainer"></div>
+                </div>
+                <div id="DetailReport" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC_Detail, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccParent_Detail, Model.ParentList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccChild_Detail, Model.ChildList, new { @multiple = "multiple" })
+
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Customer_Detail" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã GCS:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Syn_GCS_Code_Detail" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status_Detail, Model.StatusDetailList, new { @class = "chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Loại TK:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status_AccDetail, Model.StatusAccList, new { @class = "chosen-select" })
+                            </div>
+                        </div>
+                        <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Chấm nợ từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_FromDate_Detail" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_ToDate_Detail" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Thu từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_FromDate_Detail" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_ToDate_Detail" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchDetailReport" class="btn btn-success">Tìm kiếm</button>
+                                <input type="hidden" id="id_detail" />
+                            </div>
+                        </div>
+                        @*<div class="form-group">
+                                <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                    <button type="button" id="btnSearchDetailReport" class="btn btn-success">Tìm kiếm</button>
+                                    <input type="hidden" id="id_detail" />
+                                </div>
+                            </div>*@
+                    </form>
+                    <div id="DetailContainer"></div>
+                </div>
+                <div id="DetailWater" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Dịch vụ:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Service_Detail, Model.ServiceDetail, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Nhà cung cấp:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC_Detail_Orther, Model.PCListDetail, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccParent_Detail_Orther, Model.ParentList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status_Detail_Orther, Model.StatusDetailList, new { @class = "chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Customer_Detail_Orther" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccChild_Detail_Orther, Model.ChildList, new { @multiple = "multiple" })
+                            </div>
+                        </div>
+                        <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchDetailOtherReport" class="btn btn-success">Tìm kiếm</button>
+                                <input type="hidden" id="id_DetailOther" />
+                                <input type="hidden" id="id_fromdate" />
+                                <input type="hidden" id="id_todate" />
+                                <input type="hidden" id="id_pccode" />
+                            </div>
+                        </div>
+                        @*<div class="form-group">
+                                <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                    <button type="button" id="btnSearchDetailOtherReport" class="btn btn-success">Tìm kiếm</button>
+                                    <input type="hidden" id="id_DetailOther" />
+                                    <input type="hidden" id="id_fromdate" />
+                                    <input type="hidden" id="id_todate" />
+                                    <input type="hidden" id="id_pccode" />
+                                </div>
+                            </div>*@
+                    </form>
+                    <div id="OrtherDetailContainer"></div>
+
+                </div>
+                <div id="DetailTopup" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Dịch vụ:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Service_Detail, Model.ServiceDetail, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Nhà cung cấp:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC_Detail_Orther, Model.PCListDetail, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccParent_Detail_Orther, Model.ParentList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status_Detail_Orther, Model.StatusDetailList, new { @class = "chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Customer_Detail_Orther" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccChild_Detail_Orther, Model.ChildList, new { @multiple = "multiple" })
+                            </div>
+                        </div>
+                        <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchDetailOtherReport" class="btn btn-success">Tìm kiếm</button>
+                                <input type="hidden" id="id_DetailOther" />
+                                <input type="hidden" id="id_fromdate" />
+                                <input type="hidden" id="id_todate" />
+                                <input type="hidden" id="id_pccode" />
+                            </div>
+                        </div>
+                    </form>
+                    <div id="TopupDetailContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var dataSum = null;
+    var dataDetail = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        //tong hop
+        $('#AccChild').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#Service').change(function () {
+            var check = $("#Service option:selected").val();
+            if (check == 3 || check == 4 || check == 5 || check == 6 || check == 7) {
+                document.getElementById('msg_info').innerHTML = 'Chức năng đang được nâng cấp';
+                $('#info').modal('show');
+            } else {
+                if (check == 1 || check == 0) {
+                    $('#Syn_Pay').show();
+                    $('#Status_Acc').prop('disabled', false).trigger("chosen:updated");
+                } else {
+                    $('#Syn_Pay').hide();
+                    $('#Status_Acc').prop('disabled', true).trigger("chosen:updated");
+                }
+                $.ajax({
+                    url: '/Report/ChangePC',
+                    type: 'post',
+                    data: {
+                        service: check
+                    },
+                    success: function (data) {
+                        if (data.isRedirect) {
+                            window.location.href = data.redirectUrl;
+                        } else if (data.Result === "SUCCESS") {
+                            $("#PC").empty();
+                            $.each(data.Array, function (index, optionData) {
+                                $("#PC").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                            });
+                            $("#PC").trigger('chosen:updated');
+                            $("#PC").change();
+                        } else {
+                            $("#PC").empty();
+                            $("#PC").append("<option value='" + " " + "'>" + " " + "</option>");
+                            $("#PC").trigger('chosen:updated');
+                            $("#PC").change();
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (errorThrown) {
+                        document.getElementById('msg_error').innerHTML = 'Lỗi kết nối';
+                        $('#error').modal('show');
+                    }
+                });
+            }
+        });
+        $('#AccParent').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccParent option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccChild').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccChild").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccChild").multiselect('rebuild');
+                    } else {
+                        $('#AccChild').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#SumContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Báo cáo tổng hợp</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Xuất báo cáo tổng hợp ra định dạng excel" onclick="checkCNN(\'' + 1 + '\')">' +
+                    '<img src="/images/excel_2010.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Kết xuất</label></a>' +
+                    '<a href="#" class="navbutton" title="Chi tiết lỗi" onclick="checkCNN(\'' + 0 + '\')">' +
+                    '<img src="/images/list_metro.png" style="padding-bottom: 2px;"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Chi tiết hoàn trả</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Số ví', dataField: 'col_1', width: '10%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Thu ngân viên', dataField: 'col_20', width: '15%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Số GD', dataField: 'col_21', columngroup: 'TKTD', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền', dataField: 'col_22', columngroup: 'TKTD', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Số GD', dataField: 'col_2', columngroup: 'Paid', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'col_3', columngroup: 'Paid', width: '11%', cellsalign: 'right', align: 'center' },
+                { text: 'Số GD', dataField: 'col_4', columngroup: 'ProcessPendingDebit', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Tổng tiền', dataField: 'col_5', columngroup: 'ProcessPendingDebit', width: '11%', cellsalign: 'right', align: 'center' },
+                { text: 'Số GD', dataField: 'col_10', columngroup: 'WaitProcess', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'col_11', columngroup: 'WaitProcess', width: '11%', align: 'center', cellsalign: 'right' },
+                { text: 'Số GD', dataField: 'col_14', columngroup: 'Cancel', width: '7%', align: 'center', cellsalign: 'right', cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Tổng tiền', dataField: 'col_15', columngroup: 'Cancel', width: '11%', align: 'center', cellsalign: 'right', cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Số GD', dataField: 'col_16', columngroup: 'TotalCollected', width: '7%', align: 'center', cellsalign: 'right', cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Tổng tiền', dataField: 'col_17', columngroup: 'TotalCollected', width: '11%', align: 'center', cellsalign: 'right', cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Tổng GD', dataField: 'col_23', columngroup: 'Total', width: '7%', align: 'center', cellsalign: 'right', cellclassname: function (row, columfield, value) { return 'blue'; } },
+                { text: 'Tổng tiền', dataField: 'col_24', columngroup: 'Total', width: '11%', align: 'center', cellsalign: 'right', cellclassname: function (row, columfield, value) { return 'blue';}}
+            ],
+            columngroups: [
+                { text: 'Nạp TKTD', align: 'center', name: 'TKTD' },
+                { text: 'Thành công', align: 'center', name: 'Paid' },
+                { text: 'Đang xử lý', align: 'center', name: 'ProcessPendingDebit' },
+                { text: 'Nghi ngờ chưa xử lý', align: 'center', name: 'WaitProcess' },
+                { text: 'Hủy', align: 'center', name: 'Cancel' },
+                { text: 'Hoàn trả', align: 'center', name: 'TotalCollected' },
+                { text: 'Tổng Thu', align: 'center', name:'Total'}
+            ]
+        });
+        $('#btnSearchSummaryReport').click(function () {
+            var option = $('#Service option:selected').val();
+            if (option == 3 || option == 4 || option == 5 || option == 6 || option == 7) {
+                document.getElementById('msg_info').innerHTML = 'Chức năng đang được nâng cấp';
+                $('#info').modal('show');
+            } else {
+                $('.loading').show();
+                if (option == 0 || option == 1) {
+                    $('#Syn_Pay_FromDate_Detail').val($('#Syn_Pay_FromDate').val());
+                    $("#Syn_Pay_ToDate_Detail").val($("#Syn_Pay_ToDate").val());
+                    $('#Syn_Upload_FromDate_Detail').val($('#Syn_Upload_FromDate').val());
+                    $('#Syn_Upload_ToDate_Detail').val($('#Syn_Upload_ToDate').val());
+                } else {
+                    $('#FromDate').val($('#Syn_Pay_FromDate').val());
+                    $("#ToDate").val($("#Syn_Pay_ToDate").val());
+                }
+                $.ajax({
+                    url: '/Report/SearchPointCollection',
+                    type: 'post',
+                    data: {
+                        option: option,
+                        pcCode: $("#PC option:selected").val(),
+                        Account: $('#AccParent option:selected').text(),
+                        ListAcc: getChildSelected(1),
+                        Pay_FromDate: $('#Syn_Pay_FromDate').val(),
+                        Pay_ToDate: $("#Syn_Pay_ToDate").val(),
+                        Upload_FromDate: $('#Syn_Upload_FromDate').val(),
+                        Upload_ToDate: $('#Syn_Upload_ToDate').val(),
+                        status_Acc: $('#Status_Acc option:selected').val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        if (data.Result == "SUCCESS") {
+                            $('#id_sum').val(data.id);
+                            dataSum = data.Records;
+                            $("#SumContainer").jqxGrid('refresh');
+                            $("#SumContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(dataSum)) });
+                        } else {
+                            $('#id_sum').val('');
+                            $('#SumContainer').jqxGrid('clear');
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (errorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            }
+        });
+        // end tong hop
+        //chi tiet
+        $('#AccChild_Detail').multiselect({
+            includeSelectAllOption: false,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#AccParent_Detail').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccParent_Detail option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccChild_Detail').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccChild_Detail").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccChild_Detail").multiselect('rebuild');
+                    } else {
+                        $('#AccChild_Detail').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#DetailContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Báo cáo chi tiết [ Tổng số hóa đơn: <span id='total_bill' style='color: red;'>0</span> , Tổng tiền: <span id='total_amount' style='color: red;'>0</span> ]</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Xuất báo cáo chi tiết ra định dạng excel" onclick="checkCNN(\'' + 2 + '\')">' +
+                    '<img src="/images/excel_2010.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Kết xuất</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: ' ', width: '3%', align: 'center', pinned: true, cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                            ' onclick="CheckDetail(\'' + row + '\' )" >' +
+                            '<img src="/images/list_metro.png" title="Xem thông tin chi tiết"/></a></div>';
+                    }
+                },
+                { text: 'Mã khách hàng', dataField: 'col_1', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã thẻ', dataField: 'col_15', width: '7%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên khách hàng', dataField: 'col_2', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'col_3', width: '33%', cellsalign: 'left', align: 'center' },
+                { text: 'Số GCS', dataField: 'col_4', width: '7%', cellsalign: 'left', align: 'center' },
+                { text: 'Nạp TKTĐ', dataField: 'col_14', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Số tiền', dataField: 'col_5', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Kỳ HĐ', dataField: 'col_6', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Ngày thu', dataField: 'col_12', width: '8%', cellsalign: 'right', align: 'center' },
+                { text: 'Ngày chấm', dataField: 'col_13', width: '8%', cellsalign: 'right', align: 'center' },
+                { text: 'Trạng thái', dataField: 'col_7', width: '10%', align: 'center', cellsalign: 'left' }
+            ],
+        });
+        $('#total_bill').text(0);
+        $('#total_amount').text(0);
+        $('#btnSearchDetailReport').click(function () {
+            var paginginformation = $('#DetailContainer').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetailCollection',
+                type: 'post',
+                data: {
+                    pcCode: $("#PC_Detail option:selected").val(),
+                    Account: $('#AccParent_Detail option:selected').val(),
+                    ListAcc: getChildSelected(0),
+                    customer: $('#Customer_Detail').val(),
+                    Pay_FromDate: $('#Syn_Pay_FromDate_Detail').val(),
+                    Pay_ToDate: $("#Syn_Pay_ToDate_Detail").val(),
+                    Upload_FromDate: $('#Syn_Upload_FromDate_Detail').val(),
+                    Upload_ToDate: $('#Syn_Upload_ToDate_Detail').val(),
+                    BookCMIS: $('#Syn_GCS_Code_Detail').val(),
+                    status: $('#Status_Detail option:selected').val(),
+                    status_Acc: $('#Status_AccDetail option:selected').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detail').val(data.id);
+                        dataDetail = data.Records;
+                        $("#DetailContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetail(data));
+                        $("#DetailContainer").jqxGrid({
+                            source: dataadapter2,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.total_amount);
+                    } else {
+                        $('#id_detail').val('');
+                        $('#DetailContainer').jqxGrid('clear');
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.total_amount);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $("#DetailContainer").bind("pagechanged", function (event) {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetailCollection',
+                type: 'post',
+                data: {
+                    pcCode: $("#PC_Detail option:selected").val(),
+                    Account: $('#AccParent_Detail option:selected').val(),
+                    ListAcc: getChildSelected(0),
+                    customer: $('#Customer_Detail').val(),
+                    Pay_FromDate: $('#Syn_Pay_FromDate_Detail').val(),
+                    Pay_ToDate: $("#Syn_Pay_ToDate_Detail").val(),
+                    Upload_FromDate: $('#Syn_Upload_FromDate_Detail').val(),
+                    Upload_ToDate: $('#Syn_Upload_ToDate_Detail').val(),
+                    BookCMIS: $('#Syn_GCS_Code_Detail').val(),
+                    status: $('#Status_Detail option:selected').val(),
+                    status_Acc: $('#Status_AccDetail option:selected').val(),
+                    pagenum: event.args.pagenum,
+                    pagesize: event.args.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detail').val(data.id);
+                        dataDetail = data.Records;
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetail(data));
+                        $("#DetailContainer").jqxGrid({
+                            source: dataadapter2,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.total_amount);
+                    } else {
+                        $('#id_detail').val('');
+                        $('#DetailContainer').jqxGrid('clear');
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.total_amount);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        //end chi tiet
+        // chi tiêt nươc
+        $('#AccParent_Detail_Orther').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccParent_Detail_Orther option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccChild_Detail_Orther').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccChild_Detail_Orther").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccChild_Detail_Orther").multiselect('rebuild');
+                    } else {
+                        $('#AccChild_Detail_Orther').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#AccChild_Detail_Orther').multiselect({
+            includeSelectAllOption: false,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#OrtherDetailContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Báo cáo chi tiết [ Tổng giao dịch: <span id='total_tran_orther' style='color: red;'>0</span>, Tổng số hóa đơn: <span id='total_bill_orther' style='color: red;'>0</span> , Tổng tiền: <span id='total_amount_orther' style='color: red;'>0</span> ]</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Xuất báo cáo chi tiết ra định dạng excel" onclick="checkCNN(\'' + 3 + '\')">' +
+                    '<img src="/Images/excel_2010.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Kết xuất</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            //pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Ngày TT', dataField: 'col_2', width: '10%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Ví thanh toán', dataField: 'col_3', width: '13%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Số tiền', dataField: 'col_4', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Số HĐ', dataField: 'col_5', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Dịch vụ', dataField: 'col_6', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Mã khách hàng', dataField: 'col_7', width: '10%', cellsalign: 'left', align: 'center' },
+                { text: 'Tên khách hàng', dataField: 'col_8', width: '15%', cellsalign: 'left', align: 'center' },
+                { text: 'Địa chỉ', dataField: 'col_9', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Trạng thái', dataField: 'col_10', width: '7%', align: 'center', cellsalign: 'right' }
+            ]
+        });
+        $("#OrtherDetailContainer").bind("pagechanged", function (event) {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetail_Other',
+                type: 'post',
+                data: {
+                    pcCode: $('#PC_Detail_Orther option:selected').val(),
+                    account: $('#AccParent_Detail_Orther option:selected').val(),
+                    edong: getChildSelected(2),
+                    customer: $('#Customer_Detail_Orther').val(),
+                    fromdate: $('#FromDate').val(),
+                    todate: $('#ToDate').val(),
+                    pagenum: event.args.pagenum,
+                    pagesize: event.args.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_DetailOther').val(data.id);
+                        $('#id_fromdate').val(data.fromdate);
+                        $('#id_todate').val(data.todate);
+                        $('#total_bill_orther').text(data.total_bill);
+                        $('#total_amount_orther').text(data.total_amount);
+                        $('#total_tran_orther').text(data.total_tran);
+
+                        $("#OrtherDetailContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetailWater(data));
+                        $("#OrtherDetailContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $("#OrtherDetailContainer").jqxGrid('updatebounddata', 'cells');
+                    } else {
+                        $('#total_tran_orther').text(0);
+                        $('#total_amount_orther').text(0);
+                        $('#total_bill_orther').text(0);
+                        $('#id_DetailOther').val('');
+                        $('#id_fromdate').val('');
+                        $('#id_todate').val('');
+                        $('#OrtherDetailContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $('#btnSearchDetailOtherReport').click(function () {
+            var paginginformation = $('#OrtherDetailContainer').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetail_Other',
+                type: 'post',
+                data: {
+                    pcCode: $('#PC_Detail_Orther option:selected').val(),
+                    account: $('#AccParent_Detail_Orther option:selected').val(),
+                    edong: getChildSelected(2),
+                    customer: $('#Customer_Detail_Orther').val(),
+                    fromdate: $('#FromDate').val(),
+                    todate: $('#ToDate').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_DetailOther').val(data.id);
+                        $('#id_fromdate').val(data.fromdate);
+                        $('#id_todate').val(data.todate);
+                        $('#total_bill_orther').text(data.total_bill);
+                        $('#total_amount_orther').text(data.total_amount);
+                        $('#total_tran_orther').text(data.total_tran);
+                        $("#OrtherDetailContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetailWater(data));
+                        $("#OrtherDetailContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $("#OrtherDetailContainer").jqxGrid('updatebounddata', 'cells');
+                    } else {
+                        $('#total_tran_orther').text(0);
+                        $('#total_amount_orther').text(0);
+                        $('#total_bill_orther').text(0);
+                        $('#id_DetailOther').val('');
+                        $('#id_fromdate').val('');
+                        $('#id_todate').val('');
+                        $('#OrtherDetailContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        // end chi tiết nước
+        //chi tiêt topup
+
+        //end
+    });
+    function CheckDetail(cellValue) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    $.ajax({
+                        type: 'get',
+                        url: '/Report/_DetailHistoryBill',
+                        data: {
+                            bill: encodeURI($("#DetailContainer").jqxGrid('getrowdata', cellValue).col_8),
+                            customer: encodeURI($("#DetailContainer").jqxGrid('getrowdata', cellValue).col_1),
+                            amount: encodeURI($("#DetailContainer").jqxGrid('getrowdata', cellValue).col_5)
+                        },
+                        success: function (data) {
+                            $('#dynamic-modal').html(data);
+                            $("#dynamic-modal").modal('show');
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        })
+    }
+    function checkCNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+                else {
+                    if (index == 0) {
+                        if ($('#id_sum').val()) {
+                            $.ajax({
+                                type: 'get',
+                                url: '/Report/_DetailError',
+                                success: function (data) {
+                                    $('#dynamic-modal').html(data);
+                                    $("#dynamic-modal").modal('show');
+                                },
+                                error: function (ErrorThrown) {
+                                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                    $('#error').modal('show');
+                                }
+                            });
+                        }
+                    }else if (index == 1) {
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Report/ExportCollectionPoint?id=' + encodeURI($('#id_sum').val());
+                        }
+                    }else if(index == 2) {
+                        if ($('#id_detail').val()) {
+                            window.location.href = '/Report/ExportDetailPoint?id=' + encodeURI($('#id_detail').val());
+                        }
+                    } else {
+                        if ($('#id_DetailOther').val()) {
+                            window.location.href = '/Report/ExportDetailOther?id=' + encodeURI($('#id_DetailOther').val()) + '&fromdate=' + encodeURI($('#id_fromdate').val()) + '&todate=' + encodeURI($('#id_todate').val()) +
+                                '&total_trans=' + encodeURI(document.getElementById("total_tran_orther").innerText) + '&total_bill=' + encodeURI(document.getElementById("total_bill_orther").innerText) +
+                                '&total_amount=' + encodeURI(document.getElementById("total_amount_orther").innerText);
+                        }
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceSum(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function sourceDetail(data) {
+        var source =
+        {
+            datatype: "array",
+            localData: data.Records,
+            totalrecords: data.total_bill,
+            root: 'Rows',
+            beforeprocessing: function (data) {
+                source.totalrecords = data[0].col_16;
+            }
+        };
+        return source;
+    }
+
+    function sourceDetailWater(data) {
+        var source =
+        {
+            datatype: "array",
+            localData: data.Records,
+            totalrecords: data.total_tran,
+            root: 'Rows',
+            beforeprocessing: function (data) {
+                source.totalrecords = data[0].col_11;
+            }
+        };
+        return source;
+    }
+
+    function getChildSelected(index) {
+        var obj = [];
+        if (index == 1) {
+            var selected = $("#AccChild option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        } else if (index == 2) {
+            var selected = $("#AccChild_Detail_Orther option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        } else {
+            var selected = $("#AccChild_Detail option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        }
+        if (obj.length > 0) {
+            return JSON.stringify(obj);
+        }
+        else
+            return null;
+    }
+</script>

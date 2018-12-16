@@ -1,0 +1,255 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@model ePOS3.Entities.RequestObject.ObjLogSearchModel
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function () {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#AddLogViewE" data-toggle="tab">Quản lý log nghiệp vụ</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="AddLogViewE">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Ứng dụng:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                @Html.DropDownListFor(m => m.application, Model.ApplicationList, new { @class = "form-control chosen-select" })
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="display:none;">Loại log:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12" style="display:none;">
+                                @Html.DropDownListFor(m => m.type, Model.TypeList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Mã log:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="logId" class="form-control" />
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Hàm XL:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="method" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDate" value="@ViewBag.FromDate" aria-describedby="inputSuccess2Status" style="width:236px;">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">đến ngày:  </label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDate" value="@ViewBag.ToDate" aria-describedby="inputSuccess2Status" style="width:236px;">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchLogView" class="btn btn-success">Tìm kiếm</button>
+                            </div>
+                        </div>
+
+                    </form>
+                    <div id="LogViewEContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+@*<script type="text/javascript" src="/js/datepicker/daterangepicker.min.js"></script>*@
+
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+
+    $('.datefield').daterangepicker({
+        singleDatePicker: true,
+        timePicker: true,
+        timePicker24Hour: true,
+        timePickerIncrement: 1,
+        showDropdowns: true,
+        timePickerSeconds: true,
+        format: 'DD/MM/YYYY HH:mm:ss'
+    }, function (start, end, label) {
+        console.log(start.toISOString(), end.toISOString(), label);
+    });
+
+    var datasourePC = null;
+    $(document).ready(function () {
+
+        $('#LogViewEContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách log nghiệp vụ</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Mã Log', dataField: 'logId', width: '8%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Ứng dụng', dataField: 'application', width: '10%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Hàm xử lý', dataField: 'method', width: '20%', pinned: true, align: 'center', cellsalign: 'left' },
+                {
+                    text: 'Request/Response', dataField: 'request', width: '12%', align: 'center', cellsalign: 'center',cellsrenderer: function (row) {
+                        return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                            ' onclick="DetailLog(\'' + row + '\')" >' +
+                            'Chi tiết</a></div>';
+                    }
+                },
+                { text: 'Thời gian XL', dataField: 'duration', width: '8%', align: 'center', cellsalign: 'right' },
+                { text: 'Từ ngày', dataField: 'startTime', width: '12%', align: 'center', cellsalign: 'left' },
+                { text: 'Đến ngày', dataField: 'endTime', width: '12%', align: 'center', },
+                { text: 'Trạng thái', dataField: 'status', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'File dữ liệu', dataField: 'logPath', width: '30%', align: 'center', cellsalign: 'left' },
+            ]
+        });
+        $('#btnSearchLogView').click(function () {
+            var paginginformation = $('#LogViewEContainer').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchLogViewE',
+                type: 'post',
+                data: {
+                    application: $('#application option:selected').val(),
+                    type: $('#type option:selected').val(),
+                    logId: $("#logId").val(),
+                    method: $('#method').val(),
+                    fromDate: $('#FromDate').val(),
+                    toDate: $("#ToDate").val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == 'SUCCESS') {
+                        datasourePC = data.Records;
+                        $("#LogViewEContainer").jqxGrid('refresh');
+                        $("#LogViewEContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourcePC(datasourePC)) });
+                    } else {
+                        datasourePC = null;
+                        $('#LogViewEContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function sourcePC(data) {
+        var source =
+        {
+            id: 'code',
+            localData: data,
+        };
+        return source;
+    }
+    function DetailLog(cellValue) {
+
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    $.ajax({
+                        type: 'post',
+                        url: '/Help/_DetailLogViewE',
+                        data: {
+                            request: encodeURI($("#LogViewEContainer").jqxGrid('getrowdata', cellValue).request),
+                            response: encodeURI($("#LogViewEContainer").jqxGrid('getrowdata', cellValue).response)
+                        },
+                        success: function (data) {
+                            $('#dynamic-modal').html(data);
+                            $("#dynamic-modal").modal('show');
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                    //$("body").addClass("loading");
+                    //$('#dialog-stock').dialog({
+                    //    autoOpen: false,
+                    //    position: ["center", "center"],
+                    //    height: 500,
+                    //    width: 1250,
+                    //    resizable: true,
+                    //    modal: true,
+                    //    title: "Danh sách chi tiết",
+                    //    create: function (event) { $(event.target).parent().css('position', 'fixed'); },
+                    //    open: function (event, ui) {
+                    //        $(this).load("/Report/DetailHistory?id=" + encodeURI(JSON.stringify($("#CustomerContainer").jqxGrid('getrowdata', cellValue))));
+                    //    },
+                    //    close: function () {
+                    //        $("body").removeClass("loading");
+                    //        $("#dialog-stock").dialog("close");
+                    //    }
+                    //});
+                    //$('#dialog-stock').dialog('open');
+                }
+            },
+            error: function () {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        })
+    }
+</script>

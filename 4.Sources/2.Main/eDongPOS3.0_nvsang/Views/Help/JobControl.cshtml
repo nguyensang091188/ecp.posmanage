@@ -1,0 +1,280 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.SetParamModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#JobControl" data-toggle="tab">Quản lý đối soát</a></li>
+                
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="JobControl">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tổng công ty:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Corporation, Model.CorporationList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty điện lực:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-12 form-group has-feedback">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="JobControlContainer"></div>
+                </div>                
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">   
+    var dataJobControl = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('#Corporation').change(function () {
+            $.ajax({
+                url: '/ePOS/getPCbyEVN',
+                type: 'post',
+                data: {
+                    id: $("#Corporation option:selected").val(),
+                    index: '3',
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    $('#PC').empty();
+                    $.each(data.Data, function (index, optionData) {
+                        $("#PC").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                    });
+                    $("#PC").trigger('chosen:updated');
+                    $("#PC").change();
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi kết nối';
+                    $('#error').modal('show');
+                }
+            });
+        });
+
+        $('#JobControlContainer').jqxGrid({
+            width: '100%',
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách giờ đôi soát</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px; font-size: 11px; font-weight: bold;"><a href="#" class="navbutton" onclick="checkCNN(\'' + 1 + '\',\'' + 0 + '\')" title="Thêm mới quản lý đối soát">' +
+                     '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            autoheight: true,
+            pagesize: 500,
+            pagesizeoptions: ['500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            altrows: true,
+            rowsheight: 35,
+            columns: [
+                 {
+                     text: 'STT', dataField: '', width: '4%', align: 'center', cellsalign: 'center',
+                     cellsrenderer: function (row, column, value) {
+                         return "<div style='margin-top: 9.5px;text-align: center;'>" + (row + 1) + "</div>";
+                     }
+                 },
+                { text: 'Mã ĐL', dataField: 'col_2', width: '7%', cellsalign: 'left', align: 'center', },
+                {
+                    text: 'Cờ HM', dataField: 'col_3', width: '5%', cellsalign: 'center', align: 'center',
+                    cellsrenderer: function (row, column, value) {
+                        if (value == '1')
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Có</div>";
+                        else
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Không</div>";
+                    }
+                },
+                { text: 'Dự kiến CN', dataField: 'col_4', width: '14%', cellsalign: 'left', align: 'center' },
+                { text: 'Giờ ĐS', dataField: 'col_5', width: '7%', cellsalign: 'left', align: 'center' },
+                { text: 'Ngày TK', dataField: 'col_6', width: '8%', cellsalign: 'left', align: 'center' },
+                {
+                    text: 'Kiểu ĐS', dataField: 'col_7', width: '6%', cellsalign: 'center', align: 'center',
+                    cellsrenderer: function (row, column, value) {
+                        if (value == '0')
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>N + 1</div>";
+                        else
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>N</div>";
+                    }
+                },
+                {
+                    text: 'ĐC ĐS', dataField: 'col_8', width: '6%', cellsalign: 'left', align: 'center',
+                    cellsrenderer: function (row, column, value) {
+                        if (value == '0')
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Không</div>";
+                        else
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Có</div>";
+                    }
+                },
+                {
+                    text: 'ĐC NN', dataField: 'col_9', width: '6%', cellsalign: 'left', align: 'center',
+                    cellsrenderer: function (row, column, value) {
+                        if (value == '0')
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Không</div>";
+                        else
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Có</div>";
+                    }
+                },
+                {
+                    text: 'KT giữ tiền', dataField: 'col_10', width: '8%', cellsalign: 'left', align: 'center',
+                    cellsrenderer: function (row, column, value) {
+                        if (value == '0')
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Không</div>";
+                        else
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Có</div>";
+                    }
+                },
+                {
+                    text: 'Trạng thái', dataField: 'col_11', width: '12%', cellsalign: 'left', align: 'center',
+                    cellsrenderer: function (row, column, value) {
+                        if (value == '0')
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Không hoạt động</div>";
+                        else
+                            return "<div class='jqx-grid-cell-left-align' style='margin-top: 9.5px;'>Hoạt động</div>";
+                    }
+                },
+                { text: 'ĐS T7', dataField: 'col_12', width: '7%', cellsalign: 'left', align: 'center' },
+                { text: 'ĐS CN', dataField: 'col_13', width: '7%', cellsalign: 'left', align: 'center' },
+                {
+                    text: '', width: '3%', cellsalign: 'center', align: 'center',
+                    cellsrenderer: function (row) {
+                        return '<div class="jqx-grid-cell-left-align" style="margin-top: 9.5px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 1 + '\')" >' +
+                            '<img src="/images/icon_edit.png" title="Cập nhật bản ghi"/></a></div>';
+                    }
+                }
+            ],
+        });
+        $('#btnSearch').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchJobControl',
+                type: 'post',
+                data: {
+                    pcCode: $('#PC option:selected').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        dataJobControl = data.Records;
+                        $("#JobControlContainer").jqxGrid('refresh');
+                        $("#JobControlContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataJobControl)) });
+
+                    } else {
+                        dataJobControl = null;
+                        $('#JobControlContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+
+            });
+        });
+    });
+    function source(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) { //EditJobControl
+                        $.ajax({
+                            type: 'post',
+                            url: '/Help/_EditJobControl',
+                            data:{
+                                id: JSON.stringify($("#JobControlContainer").jqxGrid('getrowdata', cellValue)),
+                                index: cellValue
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            type: 'post',
+                            url: '/Help/_AddJobControl',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

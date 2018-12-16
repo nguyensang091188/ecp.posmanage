@@ -1,0 +1,62 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{   
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function () {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+
+
+<div class="top_nav">
+    <div class="nav_menu">
+        <nav class="" role="navigation">
+            <div class="nav toggle">
+                <a id="menu_toggle"  style="float:left;"><i class="fa fa-bars"></i></a>  
+                <div style="padding-top: 5px;">
+                    Số dư ví: <b id="balance">@posAccount.balance.ToString("N0")</b>  &nbsp;&nbsp;&nbsp; 
+                    Số tiền bị khóa: <b id="lockmoney">@posAccount.lockMoney.ToString("N0")</b>
+                </div>
+            </div>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="">
+                    <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        <b>@posAccount.name</b>
+                        <span class="fa fa-angle-down"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-usermenu animated fadeInDown pull-right">
+                        <li>
+                            <a href="@Url.Action("Account","ePOS")">Thông tin tài khoản</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("ChangePassword","ePOS")">  Đổi mật khẩu</a>
+                        </li>
+                        <li>
+                            <a id="logout" style="cursor:pointer;"><i class="fa fa-sign-out pull-right"></i> Thoát</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#logout').click(function () {
+            document.getElementById('msg_yesno').innerHTML = 'Bạn có muốn thoát khỏi chương trình?';           
+            $("#yesno").data('index', 0);
+            $('#yesno').modal('show');
+        });
+        
+    });
+</script>

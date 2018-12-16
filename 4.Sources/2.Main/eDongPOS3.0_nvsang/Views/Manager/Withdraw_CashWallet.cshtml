@@ -1,0 +1,574 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.WithdrawModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#Withdraw" data-toggle="tab">Thu hồi hạn mức</a></li>
+                <li class="nav-item"><a href="#FileWithdraw" data-toggle="tab">Thu hồi hạn mức theo File</a></li>
+                <li class="nav-item"><a href="#CashWallet" data-toggle="tab">Ứng ví quầy</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="Withdraw">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Ví quầy:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.Account, Model.AccList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Sô dư khả dụng:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="Balance" class="form-control" maxlength="15" readonly="readonly">
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12"><img src="~/images/Refresh_1.png" style="cursor:pointer; padding-top: 4px;" id="btnRefbalance"></div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Số tiền thu hồi:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="AmountRecover" class="form-control" maxlength="15">
+                            </div>                            
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Nội dung:</label>
+                            <div class="col-md-5 col-sm-5 col-xs-12">
+                                <input type="text" id="desc" class="form-control" value="Thu hồi hạn mức Ví quầy">
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Mã xác thực:</label>
+                            <div class="col-md-2 col-sm-2 col-xs-12">
+                                <input type="text" id="Captchar" class="form-control" maxlength="6">                               
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12"><img id="img_capcha" class="img-responsive" style="height:40px;"></div>
+                            <div class="col-md-2 col-sm-2 col-xs-12"><img src="~/images/Refresh_1.png" style="cursor:pointer; padding-top: 8px;" id="refresh_capchar"></div>
+                        </div>
+                        <br />
+                        <div class="form-group">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnCancel_Withdraw" class="btn btn-primary">Nhập lại</button>
+                                <button type="button" id="btnOK_Withdraw" class="btn btn-success">Thực hiện</button>
+                            </div>
+                        </div>
+                    </form>                   
+                </div>
+
+                <div id="FileWithdraw" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">File:  </label>
+                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                <input type="file" id="uploadFile" class="form-control" onchange="validate(this.value);">
+                            </div>
+                            <div class="col-md-5 col-sm-5 col-xs-12">
+                                <button type="button" id="btnRead" class="btn btn-danger" disabled>Thu hồi</button>                                
+                                <button type="button" id="btnGetFile" class="btn btn-dark">Lấy File mẫu</button>          
+                                <input type="hidden" id="file_key" />
+                            </div>
+                        </div>
+                    </form>
+                    <div id="FileContainer"></div>
+                </div>
+
+                <div id="CashWallet" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Ví quầy:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountCash, Model.AccList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Sô dư khả dụng:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="BalanceCash" class="form-control" readonly="readonly">
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12"><img src="~/images/Refresh_1.png" style="cursor:pointer; padding-top: 4px;" id="btnRefbalanceCash"></div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Số dư ví:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="BalanceAcc" class="form-control" readonly="readonly">
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Số tiền khóa</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="LogBalance" class="form-control" readonly="readonly">
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Sô tiền đang xử lý:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="MoneyDealing" class="form-control" readonly="readonly">
+                            </div>                            
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Sô tiền ứng:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="MoneyCashWallet" class="form-control" maxlength="20">
+                            </div>
+                        </div>
+                        <br />
+                        <div class="form-group">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnCancel_Cash" class="btn btn-primary">Nhập lại</button>
+                                <button type="button" id="btnOK_Cash" class="btn btn-success">Thực hiện</button>
+                                <input type="hidden" id="id_check" value="0"/>
+                                <input type="hidden" id="id_multiplesOf"  value="0"/>
+                                <input type="hidden" id="id_type" value="0" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var validExtensions = ['xls', 'xlsx'];
+    $(document).ready(function () {
+        //Thu hoi
+        $("#img_capcha").attr('src', '/Manager/generateCaptcha/' + new Date().getTime());
+        $('#Account').change(function () {
+            getBalance();
+        });
+        $('#btnRefbalance').click(function () {
+            getBalance();
+        });
+        $('#btnCancel_Withdraw').click(function () {
+            Refersh();
+        });
+        $('#AmountRecover').forceNumeric();
+        $('#AmountRecover').keyup(function (event) {
+            if (event.which >= 37 && event.which <= 40) {
+                event.preventDefault();
+            }
+            var $this = $(this);
+            var num = $this.val().replace(/,/gi, "").split("").reverse().join("");
+            var num2 = RemoveRougeChar(num.replace(/(.{3})/g, "$1,").split("").reverse().join(""));
+            $this.val(num2);
+        });
+        $('#btnOK_Withdraw').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/TransferMoney',
+                type: 'post',
+                data: {
+                    edong: $('#Account option:selected').val(),
+                    balance: $('#Balance').val(),
+                    amount: $('#AmountRecover').val(),
+                    desc: $('#desc').val(),
+                    captchar: $('#Captchar').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result == 'SUCCESS') {
+                        Refersh();
+                        document.getElementById('balance').innerHTML = data.balance;
+                        document.getElementById('lockmoney').innerHTML = data.lockMoney;
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        //Thu hoi file
+        $('#btnGetFile').click(function () {
+            window.location.href = '/Import/Download?filename=' + encodeURI('NC_Thuhoihanmuc.xlsx');
+        });
+        $('#FileContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                //var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: skyblue;'><h4 style='margin-top: 5px; float: left; padding-left: 10px;'>Danh sách thu hồi hạn mức </h4></div>");
+                //toolbar.append(container);
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                   "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách thu hồi hạn mức</h4></div>");
+                toolbar.append(container);
+            },
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', cellsalign: 'left', align: 'center' },
+                { text: 'Ví TNV', dataField: 'col_2', width: '10%', cellsalign: 'left', align: 'center' },
+                { text: 'Tên TNV', dataField: 'col_3', width: '15%', cellsalign: 'left', align: 'center' },
+                { text: 'Số dư khả dụng', dataField: 'col_4', width: '12%', cellsalign: 'right', align: 'center' },
+                { text: 'Số tiền thu hồi', dataField: 'col_5', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Nội dung', dataField: 'col_6', width: '25%', cellsalign: 'left', align: 'center' },
+                { text: 'Kết quả', dataField: 'col_7', width: '29%', cellsalign: 'left', align: 'center' }
+            ]
+        });
+        $('#btnRead').click(function () {
+            $("#uploadFile").val('');
+            $('#btnRead').prop('disabled', true);
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/InsertFileWithdraw',
+                type: 'post',
+                data: {
+                    id: encodeURI($('#file_key').val())
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        $("#FileContainer").jqxGrid('refresh');
+                        $("#FileContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceFile(data.Records)) });
+                        document.getElementById('balance').innerHTML = data.balance;
+                        document.getElementById('lockmoney').innerHTML = data.lockMoney;
+                    } else {
+                        $('#FileContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (er) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        })
+        // Ung vi
+        $('#AccountCash').change(function () {
+            getBalance_Cash();
+        });
+        $('#btnRefbalanceCash').click(function () {
+            getBalance_Cash();
+        });
+        $('#btnCancel_Cash').click(function () {
+            getBalance_Cash();
+        })
+        $('#MoneyCashWallet').forceNumeric();
+        $('#MoneyCashWallet').keyup(function (event) {
+            if (event.which >= 37 && event.which <= 40) {
+                event.preventDefault();
+            }
+            var $this = $(this);
+            var num = $this.val().replace(/,/gi, "").split("").reverse().join("");
+            var num2 = RemoveRougeChar(num.replace(/(.{3})/g, "$1,").split("").reverse().join(""));
+            $this.val(num2);
+        });
+        $('#btnOK_Cash').click(function () {
+            if ($('#id_check').val() == 1) {
+                var amount = $('#MoneyCashWallet').val().split(',').join('');
+                var multiplesOf = $('#id_multiplesOf').val();
+                if (amount % multiplesOf == 0) {
+                    Cash();
+                } else {
+                    document.getElementById('msg_error').innerHTML = 'Số tiền chuyển/nhận từ Ví tổng – Ví TNV tiền điện trả trước và chuyển vào TKTĐ là bội số của: <b>' + addCommas(multiplesOf) +'</b>';
+                    $('#error').modal('show');
+                }
+            } else {
+                Cash();
+            }           
+        });
+    });
+    function Cash() {
+        $('.loading').show();
+        $.ajax({
+            url: '/Manager/CashMoney',
+            type: 'post',
+            data: {
+                edong: $('#AccountCash option:selected').val(),
+                amount: $('#MoneyCashWallet').val()
+            },
+            success: function (data) {
+                var amount = $('#MoneyCashWallet').val();
+                $('.loading').hide();
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.Result == 'SUCCESS') {
+                    document.getElementById('msg_info').innerHTML = data.Message;
+                    $('#info').data('index', 10);
+                    $('#info').data('amount', amount);
+                    $('#info').data('balance', data.balance);
+                    $('#info').data('lockmoney', data.lockMoney);
+                    $('#info').modal('show');
+                } else {
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (errorThrown) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+
+    function sourceFile(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function validate(file) {
+        var ext = file.split(".");
+        ext = ext[ext.length - 1].toLowerCase();
+        $('#FileContainer').jqxGrid('clear');
+        if (validExtensions.lastIndexOf(ext) == -1) {
+            $("#uploadFile").val("");
+            document.getElementById('msg_error').innerHTML = 'Định dạng file dữ liệu không đúng';
+            $('#error').modal('show');
+        }
+        else {
+            uploadFile();
+        }
+    }
+    function uploadFile() {
+        var dataFile = new FormData();
+        var files = $("#uploadFile").get(0).files;
+        if (files.length > 0) {
+            dataFile.append("MyFile", files[0]);
+        }
+        $('.loading').show();
+        $.ajax({
+            url: "/Manager/UploadFileWithdraw",
+            type: "post",
+            processData: false,
+            contentType: false,
+            data: dataFile,
+            success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.Result == "SUCCESS") {
+                    $('#file_key').val(data.Message);
+                    $('#btnRead').prop('disabled', false);
+                    $("#FileContainer").jqxGrid('refresh');
+                    $("#FileContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceFile(data.Records)) });
+                } else {
+                    $('#btnRead').prop('disabled', true);
+                    $('#file_key').val('');
+                    $('#FileContainer').jqxGrid('clear');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (er) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function Refersh() {
+        setAccount();
+        $('#Balance').val('');
+        $('#AmountRecover').val('');
+        $('#Captchar').val('');
+        $("#img_capcha").attr('src', '/Manager/generateCaptcha/' + new Date().getTime());
+    }
+    function RefershCash() {
+        setAccountCash();
+        $('#BalanceCash').val('');
+        $('#BalanceAcc').val('');
+        $('#LogBalance').val('');
+        $('#MoneyDealing').val('');
+       // $('#MoneyCashWallet').val('');
+    }
+    function setAccountCash() {
+        $.ajax({
+            url: '/ePOS/GetAccountChild',
+            type: 'post',
+            success: function (data) {
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                }
+                if (data.Result === "SUCCESS") {
+                    $("#AccountCash").empty();
+                    if (data.Array) {
+                        $("#AccountCash").append("<option value='" + "" + "'>" + "-- Chọn ví TNV --" + "</option>");
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccountCash").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        }
+                        );
+                        $("#AccountCash").trigger('chosen:updated');
+                        $("#AccountCash").change();
+                    }
+                } else {
+                    $("#AccountCash").empty();
+                    $("#AccountCash").append("<option value='" + "" + "'>" + "" + "</option>");
+                    $("#AccountCash").trigger('chosen:updated');
+                    $("#AccountCash").change();
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (errorThrown) {
+                document.getElementById('msg_error').innerHTML = 'Lỗi kết nối';
+                $('#error').modal('show');
+            }
+        });
+    }
+
+    function setAccount() {
+        $.ajax({
+            url: '/ePOS/GetAccountChild',
+            type: 'post',
+            success: function (data) {
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                }
+                if (data.Result === "SUCCESS") {
+                    $("#Account").empty();
+                    if (data.Array) {
+                        $("#Account").append("<option value='" + "" + "'>" + "-- Chọn ví TNV --" + "</option>");
+                        $.each(data.Array, function (index, optionData) {
+                            $("#Account").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        }
+                        );
+                        $("#Account").trigger('chosen:updated');
+                        $("#Account").change();
+                    }
+                } else {
+                    $("#Account").empty();
+                    $("#Account").append("<option value='" + "" + "'>" + "" + "</option>");
+                    $("#Account").trigger('chosen:updated');
+                    $("#Account").change();
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (errorThrown) {
+                document.getElementById('msg_error').innerHTML = 'Lỗi kết nối';
+                $('#error').modal('show');
+            }
+        });
+    }
+    function getBalance() {
+        if ($('#Account option:selected').val()) {
+            $.ajax({
+                url: '/Manager/getBalanceByAcc',
+                type: 'post',
+                data: {
+                    acc: $('#Account option:selected').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result == 'SUCCESS') {
+                        $('#Balance').val(data.balance);
+                        $('#AmountRecover').val('');
+                    } else {
+                        $('#Balance').val('');
+                        $('#AmountRecover').val('');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            });
+        } else {
+            $('#Balance').val('');
+            $('#AmountRecover').val('');
+        }
+    }
+    function getBalance_Cash() {
+        if ($('#AccountCash option:selected').val()) {
+            $.ajax({
+                url: '/Manager/getBalanceByAcc_Cash',
+                type: 'post',
+                data: {
+                    acc: $('#AccountCash option:selected').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result == 'SUCCESS') {
+                        $('#BalanceCash').val(data.balance);
+                        $('#BalanceAcc').val(data.balanceAcc);
+                        $('#LogBalance').val(data.lockpay);
+                        $('#MoneyDealing').val(data.waitpay)
+                       // $('#MoneyCashWallet').val('');
+                        $('#id_check').val(data.check);                       
+                        $('#id_multiplesOf').val(data.multiplesOf);
+                    } else {
+                        $('#BalanceCash').val('');
+                        $('#BalanceAcc').val('');
+                        $('#LogBalance').val('');
+                        $('#MoneyDealing').val('')
+                        $('#MoneyCashWallet').val('');
+                        $('#id_check').val('0');
+                        $('#id_multiplesOf').val('0');                      
+                        // document.getElementById('msg-infor-cashwallet').style.font = "italic bold 20px time new roman,serif";
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                        //document.getElementById('msg-infor-cashwallet').innerHTML = data.Message;
+                        //$("#dialog-infor-cashwallet").dialog("open");
+                    }
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg-infor-cashwallet').style.font = "italic bold 20px time new roman,serif";
+                    document.getElementById('msg-infor-cashwallet').innerHTML = 'Lỗi kết nối';
+                    $("#dialog-infor-cashwallet").dialog("open");
+                }
+            });
+        } else {
+            $('#BalanceCash').val('');
+            $('#BalanceAcc').val('');
+            $('#LogBalance').val('');
+            $('#MoneyDealing').val('')
+            $('#MoneyCashWallet').val('');
+        }
+    }
+    //function replaceAll(str, find, replace) {
+    //    return str.replace(new RegExp(find, 'g'), replace);
+    //}
+
+</script>

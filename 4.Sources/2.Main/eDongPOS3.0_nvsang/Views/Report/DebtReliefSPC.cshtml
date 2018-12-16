@@ -1,0 +1,372 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.DeliverySPCModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li id="li_sum" class="nav-item active"><a href="#SummaryReport" data-toggle="tab">Tổng hợp</a></li>
+                <li id="li_detail" class="nav-item"><a href="#DetailReport" data-toggle="tab">Chi tiết</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="SummaryReport">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback"  >                           
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Đơn vị QL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>                            
+                        </div>                       
+                       
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Sổ BBBG:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="BBBG" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã NV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Account" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Collector" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ngày giao:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Tháng:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.Month, Model.MonthList, new { @class = "chosen-select", @style = "width:50px;" })
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Năm:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.Year, Model.YearList, new { @class = "form-control chosen-select", @style = "width:50px;" })
+                            </div>
+                        </div>                      
+                        <div class="form-group col-md-12 col-xs-12">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchSummaryReport" class="btn btn-success">Tìm kiếm</button>
+                                <button type="button" id="btnExportSummaryReport" class="btn btn-primary" disabled title="Xuất báo cáo tổng hợp ra file excel" onclick="checkCNN(1)">Xuất File</button>
+                                <input type="hidden" id="id_sum" />                              
+                            </div>
+                        </div>
+                    </form>
+                    <div id="SumContainer"></div>
+                </div>
+
+                <div id="DetailReport" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Đơn vị quản lý:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode_Detail, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Số BBBG:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="BBBG_Detail" class="form-control" maxlength="15">
+                            </div>
+                        </div>                        
+                        
+                        <div class="col-md-3 col-sm-3 col-xs-12 text-left ">
+                            <button type="button" id="btnSearchDetailReport" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportDetailReport" class="btn btn-primary" disabled title="Xuất báo cáo chi tiết ra file excel" onclick="checkCNN(0)">Xuất File</button>
+                            <input type="hidden" id="id_detail" />
+                            <input type="hidden" id="NvienDetail">
+                            <input type="hidden" id="ThunganDetail">   
+                        </div>
+                        
+                    </form>
+                    <div id="DetailContainer"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var dataSum = null;
+    var dataDetail = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+
+        $('#SumContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách gạch nợ tổng hợp</h4></div>");
+                
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: '', width: '3%', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                            ' onclick="Detail(\'' + row + '\')" >' +
+                            '<img src="/images/list_metro.png" title="Chi tiết"/></a></div>';
+                    }
+                },
+                { text: 'Đơn vị', dataField: 'MA_DVIQLY', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Số BB Giao', dataField: 'SO_BBGIAO', width: '8%', align: 'center', cellsalign: 'right' },
+                { text: 'Thu ngân viên', dataField: 'TEN_TNGAN', width: '10%', cellsalign: 'right' },
+                { text: 'Nhân viên', dataField: 'NVIEN_GIAO', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Ngày', dataField: 'NGAY_GIAO', width: '10%', cellsalign: 'right', align: 'center' },
+
+                { text: 'HĐ', dataField: 'SO_HDON_GIAO', cellsformat: 'd', columngroup: 'Giao', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Số tiền', dataField: 'SO_TIEN_GIAO', cellsformat: 'd', columngroup: 'Giao', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'GTGT ', dataField: 'SO_THUE_GIAO', cellsformat: 'd', columngroup: 'Giao', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'SO_TIEN_GIAO_TONG', cellsformat: 'd', columngroup: 'Giao', width: '10%', align: 'center', cellsalign: 'right' },
+
+                { text: 'HĐ ', dataField: 'SO_HDON_THU_DUOC', cellsformat: 'd', columngroup: 'Thu', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền ', dataField: 'SO_TIEN_THU_DUOC', cellsformat: 'd', columngroup: 'Thu', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'GTGT ', dataField: 'SO_GTGT_THU_DUOC', cellsformat: 'd', columngroup: 'Thu', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'SO_TIEN_THU_DUOC_TONG', cellsformat: 'd', columngroup: 'Thu', width: '10%', align: 'center', cellsalign: 'right' },
+
+                { text: 'HĐ ', dataField: 'SO_HDON_TON', cellsformat: 'd', columngroup: 'Ton', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền ', dataField: 'SO_TIEN_TON', cellsformat: 'd', columngroup: 'Ton', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'GTGT ', dataField: 'SO_GTGT_TON', cellsformat: 'd', columngroup: 'Ton', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'SO_TIEN_TON_TONG', cellsformat: 'd', columngroup: 'Ton', width: '10%', align: 'center', cellsalign: 'right' },
+
+                { text: 'Trạng thái', dataField: 'TRANG_THAI', width: '10%', align: 'center', cellsalign: 'right' }
+            ],
+            columngroups: [
+                { text: 'Giao', align: 'center', name: 'Giao' },
+                { text: 'Thu', align: 'center', name: 'Thu' },
+                { text: 'Tồn', align: 'center', name: 'Ton' }
+            ]
+        });
+        $('#btnSearchSummaryReport').click(function (e) {
+            e.preventDefault();
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/DebtReliefSPCSum',
+                type: 'post',
+                data: {
+                    madviqly: $('#PCCode').val(),
+                    sobbgiao: $('#BBBG').val(),
+                    manvien: $('#Account').val(),
+                    mathungan: $('#Collector').val(),
+                    ngaygiao: $('#FromDate').val(),
+                    thang: $('#Month option:selected').val(),
+                    nam: $('#Year option:selected').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_sum').val(data.id);
+                        dataSum = data.Records;
+                        $('#btnExportSummaryReport').prop('disabled', false);
+                        $("#SumContainer").jqxGrid('refresh');
+                        $("#SumContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(dataSum)) });
+                    } else {
+                        dataSum = null;
+                        $('#btnExportSummaryReport').prop('disabled', true);
+                        $('#id_sum').val('');
+                        $('#SumContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#DetailContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách gạch nợ chi tiết</h4></div>");
+                
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'ID', width: '5%', align: 'center', cellsalign: 'left' },
+                { text: 'Số BB', dataField: 'SO_BBGIAO', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã NV', dataField: 'MA_NVIEN_GIAO', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Tên nhân viên', dataField: 'TEN_NVIEN_GIAO', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Mã KH', dataField: 'MA_KHANG', width: '8%', cellsalign: 'right', align: 'center' },
+                { text: 'Tên KH', dataField: 'TEN_KHANG', width: '15%', cellsalign: 'right', align: 'center' },
+                { text: 'Địa chỉ KH', dataField: 'DIA_CHI', width: '20%', cellsalign: 'right', align: 'center' },
+                { text: 'Danh số', dataField: 'DANH_SO', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Mã sổ GCS', dataField: 'MA_SOGCS', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'ID HĐ', dataField: 'ID_HDON', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền giao(VAT)', dataField: 'SO_TIEN_GIAO_VAT', cellsformat: 'd', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền chấm(VAT)', dataField: 'SO_TIEN_CHAM_VAT', cellsformat: 'd', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'T.Thái', dataField: 'TRANG_THAI', width: '10%', align: 'center', cellsalign: 'right' }
+            ]
+        });
+        $('#btnSearchDetailReport').click(function () {
+            $("body").addClass("loading");
+            $.ajax({
+                url: '/Report/DebtReliefSPCDetail',
+                type: 'post',
+                data: {
+                    madviqly: $("#PCCode_Detail option:selected").val(),
+                    nvien: $('#NvienDetail').val(),
+                    thungan: $('#ThunganDetail').val(),
+                    sobbgiao: ('#BBBG_Detail').val()
+                },
+                success: function (data) {
+                    $("body").removeClass("loading");
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detail').val(data.id);
+                        dataDetail = data.Records;
+                        $('#btnExportDetailReport').prop('disabled', false);
+                        $("#DetailContainer").jqxGrid('refresh');
+                        $("#DetailContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceDetail(dataDetail)) });
+                    } else {
+                        dataDetail = null;
+                        $('#btnExportDetailReport').prop('disabled', true);
+                        $('#id_detail').val('');
+                        $('#DetailContainer').jqxGrid('clear');
+                        document.getElementById('msg-infor').style.font = "italic bold 20px time new roman,serif";
+                        document.getElementById('msg-infor').innerHTML = data.Message;
+                        $("#dialog-infor").dialog('open');
+                    }
+                },
+                error: function (ErrorThrown) {
+
+                    $("body").removeClass("loading");
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function Detail(cellValue) {        
+        var record = $("#SumContainer").jqxGrid('getrowdata', cellValue);
+        $('#PCCode_Detail').val(record.MA_DVIQLY).trigger('chosen:updated');
+        $('#NvienDetail').val(record.NVIEN_GIAO);
+        $('#ThunganDetail').val(record.TEN_TNGAN);
+        $('#BBBG_Detail').val(record.SO_BBGIAO);
+
+        $('#SummaryReport').removeClass('active');
+        $('#DetailReport').addClass('active');
+        $('#li_sum').removeClass('active');
+        $('#li_detail').addClass('active');
+    }
+    function sourceSum(data) {
+        var source =
+        {
+            id: 'ID',
+            localData: data,
+        };
+        return source;
+    }
+    function sourceDetail(data) {
+        var source =
+        {
+            id: 'ID',
+            localData: data,
+        };
+        return source;
+    }
+    function checkCNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+                else {
+                    if (index == 1) {
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Report/ExpDebtReliefSPCSum?id=' + encodeURI($('#id_sum').val());
+                        }
+                    } else {
+                        if ($('#id_detail').val()) {
+                            window.location.href = '/Report/ExpDebtReliefSPCDetail?id=' + encodeURI($('#id_detail').val());
+                        }
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

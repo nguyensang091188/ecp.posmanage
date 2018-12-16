@@ -1,0 +1,117 @@
+﻿<div class="modal" id="info" style="margin-top:100px; ">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h5 class="modal-title">Thông báo</h5>
+            </div>
+            <div class="modal-body">
+                <p id="msg_info"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#info").on("hide.bs.modal", function () {
+            var index = $('#info').data('index');
+            if (index != null && index != '' ) {
+                if (index == 1) {
+                    $('#ControlDebtContainer').jqxGrid('clearselection');
+                    $("#ControlDebtContainer").jqxGrid('refresh');
+                    $("#ControlDebtContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataControlDebt)) });
+                } else if (index == 2) {
+                    $('#BillHandlingContainer').jqxGrid('clearselection');
+                    $("#BillHandlingContainer").jqxGrid('refresh');
+                    $("#BillHandlingContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(dataSum)) });
+                    //$('#btnSearch').click();
+                    //var page = $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum;
+                    //$('#BillHandlingContainer').jqxGrid('gotopage', page);
+                } else if (index == 3) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("LogOff", "ePOS")';
+                } else if (index == 4) {
+                    $('#CancelRequestContainer').jqxGrid('clearselection');
+                    $("#CancelRequestContainer").jqxGrid('refresh');
+                    $("#CancelRequestContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataCancel)) });
+                } else if (index == 5) {
+                    $('#AccountContainer').jqxGrid('clearselection');
+                    $("#AccountContainer").jqxGrid('refresh');
+                    $("#AccountContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceAcc(dataAccount)) });
+                    //$('#AccountContainer').jqxGrid('selectrow', cellValue);
+                } else if (index == 6) {
+                    $("#ParameterContainer").jqxGrid('refresh');
+                    $("#ParameterContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataParam)) });
+                    //$("#ParameterContainer").jqxGrid('selectrow', data.index);
+                } else if (index == 7) {
+                    $("#JobContainer").jqxGrid('refresh');
+                    $("#JobContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataJob)) });
+                    $("#JobContainer").jqxGrid('selectrow', $('#info').data('row'));
+                } else if (index == 8) {
+                    $("#APIContaier").jqxGrid('refresh');
+                    $("#APIContaier").jqxGrid({ source: new $.jqx.dataAdapter(source(dataRole)) });
+                    $("#APIContaier").jqxGrid('selectrow', $('#info').data('row'));
+                } else if (index == 9) {
+                    $("#JobContainer").jqxGrid('refresh');
+                    $("#JobContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataJob)) });
+                    $("#JobContainer").jqxGrid('selectrow', data.index);
+                } else if (index == 10) {
+
+                    $('#balance').text($('#info').data('balance'));
+                    $('#lockmoney').text($('#info').data('lockmoney'));
+                    $('#MoneyCashWallet').val($('#info').data('amount'));
+                    getBalance_Cash();
+                } else if (index == 11) {
+                    var x = $('.jtable-page-number-active').text();
+                    $('.jtable-goto-page option[value="' + x + '"]').prop("selected", true).change();
+                } else if (index == 12) {
+                    $("#ListCustomerChoicedSave").val('');
+                    $("#ListCustomerChoiced").val('');
+                    $('#BillHandlingContainer').jtable('load', {
+                        index: '1',
+                        pcCode: $("#PCCode option:selected").val(),
+                        account: $("#Account option:selected").val(),
+                        customer: $("#Customer").val(),
+                        type: $("#Type option:selected").val(),
+                        status: $("#Status option:selected").val(),
+                        fromdate: $("#Fromdate").val(),
+                        fromtime: $('#Time_From').val(),
+                        todate: $("#Todate").val(),
+                        totime: $('#Time_To').val(),
+                        id: $('#id_sum').val(),
+                        curentpage: $('.jtable-page-number-active').text(),
+                        CustomerChoice: $("#ListCustomerChoiced").val(),
+                    });
+                } else if (index == 13) {
+                    window.location.href = '@Url.Action("ChangePassword", "ePOS")';
+                } else if (index == 14) {
+                    $('#ControlDebtGCSContainer').jqxGrid('clearselection');
+                    $("#ControlDebtGCSContainer").jqxGrid('refresh');
+                    $("#ControlDebtGCSContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataControlDebtGCS)) });
+                } else if (index == 15) {
+                    $('#BillHandlingContainer').jtable('load', {
+                        index: 0,
+                        pcCode: $("#PCCode option:selected").val(),
+                        account: $("#Account option:selected").val(),
+                        customer: $("#Customer").val(),
+                        type: $("#Type option:selected").val(),
+                        status: '',
+                        fromdate: $("#Fromdate").val(),
+                        fromtime: $('#Time_From').val(),
+                        todate: $("#Todate").val(),
+                        totime: $('#Time_To').val(),
+                        id: $('#id_sum').val(),
+                        curentpage: $('.jtable-page-number-active').text(),
+                        CustomerChoice: $("#ListCustomerChoiced").val()
+                    });
+                }
+            }
+
+        });
+    });
+</script>

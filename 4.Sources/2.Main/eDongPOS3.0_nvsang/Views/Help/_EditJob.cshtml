@@ -1,0 +1,198 @@
+﻿@model ePOS3.Models.AddJobModel
+@{
+    if (Request.Cookies[".ASPXAUTH"] == null)
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="modal-dialog modal-sm" style="width:80%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Cập nhật tiến trình</h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mã:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobCode" class="form-control " maxlength="50" value="@ViewBag.Add_JobCode">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Tên:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobName" class="form-control " maxlength="200" value="@ViewBag.Add_JobName">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mô tả:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobDesc" class="form-control " maxlength="200" value="@ViewBag.Add_JobDesc">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Đối tượng thực thi:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobSubject" class="form-control" maxlength="200" value="@ViewBag.Add_JobSubject">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Ngày chạy:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobDay" class="form-control " maxlength="100" value="@ViewBag.Add_JobDay">
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Thời gian lặp lại:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobTimeRepeat" class="form-control " maxlength="10" value="@ViewBag.Add_JobTimeRepeat">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Đơn vị lặp lại:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_JobUnitRepeat, Model.UnitRepeatList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Sô luồng xử lý:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobNumProcess" class="form-control" maxlength="10" value="@ViewBag.Add_JobNumProcess">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Trạng thái:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @if (ViewBag.Add_JobStatus == 0)
+                        {
+                            <label class="radio-inline"><input type="radio" id="Add_JobStatus" name="lever_status" checked="checked" value="0">Không hoạt động</label>
+                            <label class="radio-inline"><input type="radio" id="Add_JobStatus" name="lever_status" value="1">Hoạt động</label>
+                        }
+                        else
+                        {
+                            <label class="radio-inline"><input type="radio" id="Add_JobStatus" name="lever_status"  value="0">Không hoạt động</label>
+                            <label class="radio-inline"><input type="radio" id="Add_JobStatus" name="lever_status" checked="checked" value="1">Hoạt động</label>
+                        }
+                        
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Lặp lại:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @if (ViewBag.Add_JobRepeat == 0)
+                        {
+                            <label class="radio-inline"><input type="radio" id="Add_JobRepeat" name="lever_repeat" checked="checked" value="0">Không</label>
+                            <label class="radio-inline"><input type="radio" id="Add_JobRepeat" name="lever_repeat" value="1">Có</label>
+                        }
+                        else
+                        {
+                            <label class="radio-inline"><input type="radio" id="Add_JobRepeat" name="lever_repeat" value="0">Không</label>
+                            <label class="radio-inline"><input type="radio" id="Add_JobRepeat" name="lever_repeat" checked="checked" value="1">Có</label>
+                        }                        
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Thời gian bắt đầu:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobTimeStart" class="form-control has-feedback-left timepicker" style="margin-left:0;" maxlength="8" value="@ViewBag.Add_JobTimeStart">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Thời gian kết thúc:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Add_JobTimeEnd" class="form-control has-feedback-left timepicker" style="margin-left:0;" maxlength="8" value="@ViewBag.Add_JobTimeEnd">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnEdit" class="btn btn-success">Cập nhật</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('#Add_JobNumProcess').forceNumeric();
+        $('#Add_JobDay').forceCheckDay();
+        $('#btnEdit').click(function () {
+            $.ajax({
+                url: '/Help/doEditJob',
+                type: 'post',
+                data: {
+                    datasource: JSON.stringify(dataJob),
+                    index: '@ViewBag.index',
+                    code: $('#Add_JobCode').val(),
+                    name: $('#Add_JobName').val(),
+                    desc: $('#Add_JobDesc').val(),
+                    subject: $('#Add_JobSubject').val(),
+                    day: $('#Add_JobDay').val(),
+                    repeat: $('input[name="lever_repeat"]').filter(':checked').val(),//$('#Add_JobRepeat:checked').val(),
+                    TimeRepeat: $('#Add_JobTimeRepeat').val(),
+                    UnitRepeat: $('#Add_JobUnitRepeat').val(),
+                    NumberProcess: $('#Add_JobNumProcess').val(),
+                    TimeStart: $('#Add_JobTimeStart').val(),
+                    TimeEnd: $('#Add_JobTimeEnd').val(),
+                    status: $('input[name="lever_status"]').filter(':checked').val(),//$('#Add_JobStatus:checked').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === 'SUCCESS') {
+                        dataJob = data.Records;
+                        $('#dynamic-modal').modal('hide');
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $("#info").data('index', 9);
+                        $("#info").data('row', data.index);
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        if (data.index != 0) {
+                            if (data.index == 1)
+                                $("#error").data('myControl', 'Add_JobCode');
+                            if (data.index == 2)
+                                $("#error").data('myControl', 'Add_JobName');
+                            if (data.index == 3)
+                                $("#error").data('myControl', 'Add_JobDesc');
+                            if (data.index == 4)
+                                $("#error").data('myControl', 'Add_JobSubject');
+                            if (data.index == 5)
+                                $("#error").data('myControl', 'Add_JobDay');
+                        }
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+</script>

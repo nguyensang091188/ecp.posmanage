@@ -1,0 +1,708 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+
+
+@{
+    Layout = "~/Views/Shared/_LayoutBillHandling.cshtml";
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function () {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.BillHandlingModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#BillHandling" data-toggle="tab">Đang xử lý chấm nợ</a></li>
+                <li class="nav-item" id="idBillTotal"><a href="#BillTotal" data-toggle="tab">Tổng hợp</a></li>
+
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="BillHandling">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Account, Model.AccList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Customer" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm- col-xs-12">Loại giữ :</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Type, Model.TypeList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status, Model.StatusList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="width:110px;">Thu từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Fromdate" aria-describedby="inputSuccess2Status" value="@DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy")">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12" style="padding-left:90px;">giờ:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12" style="padding-left: 50px;">
+                                <input type="text" id="Time_From" class="form-control has-feedback-left timepicker" style="width:80px; padding-left:10px;" maxlength="8" />
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="width:110px; margin-left:-20px;">đến ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Todate" aria-describedby="inputSuccess2Status" value="@DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy")">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12" style="padding-left: 90px;">giờ:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12" style="padding-left:30px;">
+                                <input type="text" id="Time_To" class="form-control has-feedback-left timepicker" maxlength="8" style="width:80px; padding-left:10px;" />
+                            </div>
+                        </div>
+                        <br />
+                        <div class="form-group">
+                            <div class="col-md-12 col-sm-12 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>
+                                @if (posAccount.type == -1)
+                                {
+                                    <button type="button" id="btnSyncAll" class="btn btn-success" title="Đồng bộ" style="float:right; margin-right: 10px;" disabled>Đồng bộ</button>
+                                }
+                                <button type="button" id="btnUpdateSelected" class="btn btn-warning" title="Thay đổi lịch chấm nợ" style="float:right;" disabled>Chấm nợ</button>
+                                <button type="button" id="btnExportSummaryReport" class="btn btn-primary" style="float:right; margin-left: 10px;" disabled title="Xuất hóa đơn đang xử lý ra định dạng excel" onclick="UpdateAll(0)">Xuất File</button>
+                                <button type="button" id="btnExportForControl" class="btn btn-info" style="float:right;" disabled title="Đối soát" onclick="checkCNN(2)">Đối soát</button>
+                                <button type="button" id="btnUpdateAll" class="btn btn-danger" title="Thay đổi lịch chấm nợ" style="float:right; margin-right: 10px;" disabled>Chấm All</button>
+
+                            </div>
+                        </div>
+                    </form>
+                    <div id="BillHandlingContainer"></div>
+                    <input type="hidden" id="id_sum" />
+                    <input type="hidden" id="check_status" />
+                    <input type="hidden" id="pc" />
+                    <input type="hidden" id="ListCustomerChoiced">
+                    <input type="hidden" id="ListCustomerChoicedSave">
+                    <input type="hidden" id="datefrom" />
+                    <input type="hidden" id="dateto" />
+                </div>
+
+                <div id="BillTotal" class="tab-pane">
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            //console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('#Time_From').val('00:00:00');
+        $('#Time_To').val('23:59:59');
+        var d = new Date();
+        $('#TimeSum_To').val('@ViewBag.DateTime');
+
+        $('#btnExportSummaryReport').click(function () {
+            window.location.href = '/Manager/ExportBillHandling?id=' + encodeURI($('#id_sum').val()) + '&pc=' + $('#pc').val();
+        });
+
+        $('#btnExportForControl').click(function () {
+            window.location.href = '/Manager/ExportReconciliation?id=' + encodeURI($('#id_sum').val()) + '&pc=' + $('#pc').val();
+        });
+
+        $('#BillHandlingContainer').jtable({
+            title: "<div  style='overflow: hidden; position: relative; height: 100%; width: 100%;'>" +
+                "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold; color: black;'>Danh sách hóa đơn đang xử lý chấm nợ " +
+                "[ Tổng số hóa đơn: <span id='total_bill' style='color: red;'>0</span> , Tổng tiền: <span id='total_amount' style='color: red;'>0</span> ]</h4></div>",
+            paging: true,
+            pageSize: 500,
+            pageSizes: ['50', '100', '200', '300', '400', '500'],
+            sorting: false,
+            useBootstrap: true,
+            autoOpen: false,
+            columnResizable: true,
+            columnSelectable: true,
+            saveUserPreferences: false,
+            selecting: true, //Enable selecting
+            multiselect: true, //Allow multiple selecting
+            selectingCheckboxes: true, //Show checkboxes on first column
+            //selectOnRowClick: false, //Enable this to only select using checkboxes
+
+            actions: {
+                listAction: function (postData, jtParams) {
+                    return $.Deferred(function ($dfd) {
+                        $.ajax({
+                            url: '/Manager/SearchBillHandling_2',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                index: 0,
+                                pcCode: $("#PCCode option:selected").val(),
+                                account: $("#Account option:selected").val(),
+                                customer: $("#Customer").val(),
+                                type: $("#Type option:selected").val(),
+                                status: $("#Status option:selected").val(),
+                                fromdate: $("#Fromdate").val(),
+                                fromtime: $('#Time_From').val(),
+                                todate: $("#Todate").val(),
+                                totime: $('#Time_To').val(),
+                                id: $('#id_sum').val(),
+                                curentpage: $('.jtable-page-number-active').text(),
+                                CustomerChoice: $("#ListCustomerChoiced").val(),
+                                jtStartIndex: jtParams.jtStartIndex,
+                                jtPageSize: jtParams.jtPageSize
+                            },
+                            success: function (data) {
+                                if (data.isRedirect) {
+                                    window.location.href = data.redirectUrl;
+                                } else {
+                                    if (data.Result == "OK") {
+                                        $('#total_bill').text(data.total);
+                                        $('#total_amount').text(data.amount);
+                                        $('#id_sum').val(data.id);
+                                        $('#datefrom').val(data.datefrom);
+                                        $('#dateto').val(data.dateto);
+                                        $('#btnExportSummaryReport').prop('disabled', false);
+                                        $('#btnExportForControl').prop('disabled', false);
+                                        if (data.status) {
+                                            if (data.status == 1 || data.status == 3) {
+                                                $('#btnUpdateAll').prop('disabled', true);
+                                                $('#btnUpdateSelected').prop('disabled', true);
+                                                $('#btnSyncAll').prop('disabled', true);
+                                            }
+                                            else {
+                                                $('#btnUpdateAll').prop('disabled', false);
+                                                $('#btnUpdateSelected').prop('disabled', false);
+                                                $('#btnSyncAll').prop('disabled', false);
+                                            }
+                                        } else {
+                                            $('#btnUpdateAll').prop('disabled', true);
+                                            $('#btnUpdateSelected').prop('disabled', true);
+                                            $('#btnSyncAll').prop('disabled', true);
+                                        }
+                                        if (data.TotalRecordCount == 0) {
+                                            $('#btnUpdateAll').prop('disabled', true);
+                                            $('#btnUpdateSelected').prop('disabled', true);
+                                            $('#btnSyncAll').prop('disabled', true);
+                                        } else {
+                                            $('#btnUpdateAll').prop('disabled', false);
+                                            $('#btnUpdateSelected').prop('disabled', false);
+                                            $('#btnSyncAll').prop('disabled', false);
+                                        }
+                                        $('#check_status').val(data.status);
+                                    } else {
+                                        $('#btnExportSummaryReport').prop('disabled', true);
+                                        $('#btnExportForControl').prop('disabled', true);
+                                        $('#total_bill').text(0);
+                                        $('#total_amount').text(0);
+                                        $('#datefrom').val('');
+                                        $('#dateto').val('');
+                                        $('#id_sum').val('');
+                                        $('#check_status').val('');
+                                        $('#btnUpdateSelected').css('disabled', true);
+                                        $('#btnUpdateAll').prop('disabled', true);
+                                        $('#btnSyncAll').prop('disabled', true);
+                                    }
+                                    $('#pc').val(data.pc);
+                                    //Lưu thông tin mã chọn
+                                    $("#ListCustomerChoicedSave").val(data.CustomerSelected);
+                                    $("#ListCustomerChoiced").val('');
+                                    $dfd.resolve(data);
+                                }
+                            },
+                            error: function () {
+                                $('#total_bill').text(0);
+                                $('#total_amount').text(0);
+                                $('#id_sum').val('');
+                                $('#datefrom').val('');
+                                $('#dateto').val('');
+                                $dfd.reject();
+                            }
+                        });
+                    });
+                }
+            },
+            fields: {
+                Exams: {
+                    title: '',
+                    width: '2%',
+                    sorting: false,
+                    edit: false,
+                    create: false,
+                    display: function (detail) {
+                        var $img = $('<img src="/images/list_metro.png" style="cursor: pointer;"/>');
+                        $img.click(function () {
+                            $('#BillHandlingContainer').jtable('openChildTable',
+                                $img.closest('tr'),
+                                {
+                                    title: detail.record.col_1 + ' - ' + detail.record.col_2,
+                                    actions: {
+                                        listAction: function (postData, jtParams) {
+                                            return $.Deferred(function ($dfd) {
+                                                $.ajax({
+                                                    url: '/Manager/DetailBillHandling',
+                                                    type: 'post',
+                                                    dataType: 'json',
+                                                    data: {
+                                                        id: $('#id_sum').val(),
+                                                        index: detail.record.col_8,
+                                                    },
+                                                    success: function (data) {
+                                                        if (data.isRedirect) {
+                                                            window.location.href = data.redirectUrl;
+                                                        } else {
+                                                            $dfd.resolve(data);
+                                                        }
+                                                    },
+                                                    error: function () {
+                                                        $dfd.reject();
+                                                    }
+                                                });
+                                            })
+                                        }
+                                    },
+                                    fields: {
+                                        StudentId: {
+                                            type: 'hidden',
+                                            defaultValue: detail.record.col_8
+                                        },
+                                        name: {
+                                            title: 'Tên khách hàng',
+                                            width: '20%',
+                                        },
+                                        address: {
+                                            title: 'Địa chỉ',
+                                            width: '40%'
+                                        },
+                                        pcCode: {
+                                            title: 'Mã PC',
+                                            width: '10%'
+                                        },
+                                        inning: {
+                                            title: 'Ngày GCS',
+                                            width: '10%'
+                                        },
+                                        responseCode: {
+                                            title: 'Mã lỗi',
+                                            width: '10%'
+                                        },
+                                        reason: {
+                                            title: 'Lý do',
+                                            width: '20%'
+                                        }
+                                    }
+                                }, function (data) {
+                                    data.childTable.jtable('load');
+                                });
+                        });
+                        return $img;
+                    }
+                },
+
+                col_8: {
+                    title: 'Mã GD',
+                    key: true,
+                    listClass: 'jtable_title',
+                    width: '5%',
+                    display: function (data) {
+                        if (data.record.col_8 != null)
+                            return "<div style='text-align:left;'>" + data.record.col_8 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_1: {
+                    title: 'Ví TNV',
+                    listClass: 'jtable_title',
+                    width: '8%',
+                    display: function (data) {
+                        if (data.record.col_1 != null)
+                            return "<div style='text-align:left;'>" + data.record.col_1 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_2: {
+                    title: 'Ngày thu',
+                    listClass: 'jtable_title',
+                    width: '8%',
+                    display: function (data) {
+                        if (data.record.col_2 != null)
+                            return "<div style='text-align:left;'>" + data.record.col_2 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_3: {
+                    title: 'Mã khách hàng',
+                    listClass: 'jtable_title',
+                    width: '10%',
+                    display: function (data) {
+                        if (data.record.col_3 != null)
+                            return "<div style='text-align:left;'>" + data.record.col_3 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_4: {
+                    title: 'Kỳ',
+                    listClass: 'jtable_title',
+                    width: '5%',
+                    display: function (data) {
+                        if (data.record.col_4 != null)
+                            return "<div style='text-align:right;'>" + data.record.col_4 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_19: {
+                    title: 'Ngày GCS',
+                    listClass: 'jtable_title',
+                    width: '7%',
+                    display: function (data) {
+                        if (data.record.col_19 != null)
+                            return "<div style='text-align:right;'>" + data.record.col_19 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_5: {
+                    title: 'Số tiền',
+                    listClass: 'jtable_title',
+                    width: '8%',
+                    display: function (data) {
+                        if (data.record.col_5 != null)
+                            return "<div style='text-align:right;'>" + data.record.col_5 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_6: {
+                    title: 'Loại',
+                    listClass: 'jtable_title',
+                    width: '8%',
+                    display: function (data) {
+                        if (data.record.col_6 != null)
+                            return "<div style='text-align:right;'>" + data.record.col_6 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_11: {
+                    title: 'Trạng thái',
+                    listClass: 'jtable_title',
+                    width: '10%',
+                    display: function (data) {
+                        if (data.record.col_11 != null)
+                            return "<div style='text-align:right;'>" + data.record.col_11 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                col_7: {
+                    title: 'Lịch chấm',
+                    listClass: 'jtable_title',
+                    width: '10%',
+                    display: function (data) {
+                        if (data.record.col_7 != null)
+                            return "<div style='text-align:right;'>" + data.record.col_7 + "</div>";
+                        else
+                            return '';
+                    },
+                },
+                Update: {
+                    title: ' ',
+                    width: '2%',
+                    display: function (data) {
+                        if (data.record.col_12 == "1" || data.record.col_12 == "3") {
+                            return '';
+                        } else {
+                            return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                ' onclick="Update(\'' + data.record.col_8 + '\',\'' + data.record.col_12 + '\',\'' + 0 + '\' )" >' +
+                                '<img src="/images/icon_edit.png" title="Cập nhật bản ghi"/></a></div>';
+                        }
+                    }
+                },
+                Update_2: {
+                    title: ' ',
+                    width: '2%',
+                    display: function (data) {
+                        if (@posAccount.type == -1) {
+                            return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                ' onclick="Update(\'' + data.record.col_8 + '\',\'' + data.record.col_12 + '\',\'' + 2 + '\' )" >' +
+                                '<img src="/images/icon_edit.png" title="Cập nhật bản ghi"/></a></div>';
+                        } else
+                            return '';
+                    },
+                },
+                Delete: {
+                    title: ' ',
+                    width: '2%',
+                    display: function (data) {
+                        if (data.record.col_12 == "1" || data.record.col_12 == "3") {
+                            return '';
+                        } else {
+                            if (@posAccount.type == -1) {
+                                return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                    ' onclick="Update(\'' + data.record.col_8 + '\',\'' + data.record.col_12 + '\',\'' + 1 + '\' )" >' +
+                                    '<img src="/images/icon_del.png" title="Xóa bản ghi"/></a></div>';
+                            } else
+                                return '';
+                        }
+                    }
+                }
+            },
+            selectionChanged: function () {
+                var $selectedRows = $('#BillHandlingContainer').jtable('selectedRows');
+                listChon = "";
+                if ($selectedRows.length > 0) {
+                    $selectedRows.each(function () {
+                        var record = $(this).data('record');
+                        if (listChon.indexOf(record.col_8) < 0) {
+                            listChon += record.col_8 + ";";
+                        }
+                    });
+                    $("#ListCustomerChoiced").val(listChon);
+                } else {
+                    //$("#ListCustomerChoiced").val('');
+                }
+            },
+            rowInserted: function (event, data) {
+                //alert(data.record.S_STATUS);
+                if (//($("#ListCustomerChoiced").val().length > 2 && $("#ListCustomerChoiced").val().indexOf(data.record.col_8) >= 0) ||
+                    ($("#ListCustomerChoicedSave").val().length > 2 && $("#ListCustomerChoicedSave").val().indexOf(data.record.col_8) >= 0)) {
+                    $('#BillHandlingContainer').jtable('selectRows', data.row);
+                }
+            },
+        });
+
+        $('#btnSearch').click(function () {
+            $('#BillHandlingContainer').jtable('load');
+        });
+
+        $('#btnUpdateSelected').click(function () {
+            if ($('#check_status').val() == '4') {
+                document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn thay đổi trạng thái các hóa đơn đã chọn không?';
+                $("#yesno").data('index', 17);
+                $('#yesno').modal('show');
+            } else {
+                $.ajax({
+                    type: 'post',
+                    url: '/Manager/_UpdateTimeAllBillHandling',
+                    data: {
+                        id: $('#ListCustomerChoiced').val(),
+                    },
+                    success: function (data) {
+                        $('#dynamic-modal').html(data);
+                        $("#dynamic-modal").modal('show');
+                    },
+                    error: function (ErrorThrown) {
+                        document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                        $('#error').modal('show');
+                    }
+                });
+            }
+        });
+
+        $('#btnUpdateAll').click(function () {
+            if ($('#check_status').val() == '4') {
+                document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn thay đổi trạng thái các hóa đơn đã chọn không?';
+                $("#yesno").data('index', 18);
+                $('#yesno').modal('show');
+            } else {
+                $.ajax({
+                    url: '/Manager/_UpdateTimeAllBillHandling_2',
+                    type: 'post',
+                    success: function (data) {
+                        $('#dynamic-modal').html(data);
+                        $("#dynamic-modal").modal('show');
+                    },
+                    error: function (ErrorThrown) {
+                        document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                        $('#error').modal('show');
+                    }
+                });
+            }
+        });
+
+        $('#btnSyncAll').click(function () {
+            if (!$("#PCCode option:selected").val().startsWith("PD") && !$("#Customer").val().startsWith("PD")) {
+                document.getElementById('msg_error').innerHTML = 'Tính năng đồng bộ chỉ hỗ trợ điện lực Hà Nội';
+                $('#error').modal('show');
+            } else {
+                $.ajax({
+                    url: '/Manager/UpdateAllTransOff_3',
+                    type: 'post',
+                    data: {
+                        datasource: $('#id_sum').val()
+                    },
+                    success: function (data) {
+                        if (data.Result == "SUCCESS") {
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 15);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+
+                    },
+                    error: function (ErrorThrown) {
+                        document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                        $('#error').modal('show');
+                    }
+                });
+            }
+
+        });
+
+        $('#idBillTotal').click(function () {
+            $.ajax({
+                url: '/ePOS/CheckSession',
+                type: 'post',
+                success: function (data) {
+                    $.ajax({
+                        type: 'post',
+                        url: '/Manager/_TreeHandling',
+                        data: {
+                            //edong: id_check
+                        },
+                        success: function (data) {
+                            $('#BillTotal').html(data);
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                },
+                error: function (ErrorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+
+    function Update(cellValue, status, index) {
+                                    if (index == 0) {
+                                        if (status == '4') {
+                                            document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn thay đổi trạng thái hóa đơn không?';
+                $("#yesno").data('index', 16);
+                $('#yesno').data('cellValue', cellValue);
+                $('#yesno').modal('show');
+                                        } else {
+                $.ajax({
+                                                type: 'post',
+                    url: '/Manager/_UpdateTimeBillHanding',
+                    data: {
+                                                    id: encodeURI(cellValue)
+                    },
+                    success: function (data) {
+                        $('#dynamic-modal').html(data);
+                        $("#dynamic-modal").modal('show');
+                                                },
+                    error: function (ErrorThrown) {
+                                                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                        $('#error').modal('show');
+                                                }
+                                            });
+                                        }
+                                    } else if (index == 1) { // xoa
+                                        document.getElementById('msg_yesno').innerHTML = 'Bạn có muốn xóa bản ghi đã chọn không?';
+            $("#yesno").data('index', 15);
+            $('#yesno').data('cellValue', cellValue);
+            //$('#yesno').data('page', $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum);
+            $('#yesno').modal('show');
+                                    } else if(index == 2){
+            $.ajax({
+                                            type: 'post',
+                url: '/Manager/_EditBillHandling',
+                data: {
+                                                index: encodeURI(cellValue)
+                },
+                success: function (data) {
+                    $('#dynamic-modal').html(data);
+                    $("#dynamic-modal").modal('show');
+                                            },
+                error: function (ErrorThrown) {
+                                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                                            }
+                                        });
+                                    }
+                                }
+
+
+
+
+</script>

@@ -1,0 +1,85 @@
+﻿<div class="modal-dialog modal-sm" style="width:900px; ">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Chi tiết lịch sử</h5>
+        </div>
+        <div class="modal-body">
+            <div id="DetailHistoryEVNKHContainer"></div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#DetailHistoryEVNKHContainer').jqxGrid({
+            width: '100%',
+            height: '96%',
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Chi tiết lịch sử tải hóa đơn tự động</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: 'STT', datafield: '', columntype: 'number', width: 50, align: 'center', cellsalign: 'left',
+                    cellsrenderer: function (row, column, value) {
+                        return "<div class= 'jqx-grid-cell-left-align' style='margin-top: 12px;'>" + (value + 1) + "</div>";
+                    }
+                },
+                { text: 'Mã điện lực', width: 100, dataField: 'col_2', align: 'center', cellsalign: 'left' },
+                { text: 'Mã TNV', dataField: 'col_3', width: 100, align: 'center', cellsalign: 'left' },
+                { text: 'Số hóa đơn', dataField: 'col_4', width: 120, cellsalign: 'right', align: 'center' },
+                { text: 'Số tiền', dataField: 'col_5', width: 140, cellsalign: 'right', align: 'center' },
+                { text: 'Ngày quét', dataField: 'col_6', width: 180, cellsalign: 'right', align: 'center' }
+            ]
+        });
+        getDetailHistory(); 
+    });
+    function sourceDetailHistory(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function getDetailHistory() {
+        $.ajax({
+            url: '/Manager/GetDetailHistoryKH',
+            type: 'post',
+            data: {
+                pcCode: '@ViewBag.pc',
+                id: '@ViewBag.id'
+            },
+            success: function (data) {
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                if (data.Result == "SUCCESS") {
+                    $("#DetailHistoryEVNKHContainer").jqxGrid('refresh');
+                    $("#DetailHistoryEVNKHContainer").jqxGrid({
+                        source: new $.jqx.dataAdapter(sourceDetailHistory(data.Records))
+                    });
+                } else {
+                    $('#dynamic-modal-detail').modal('hide');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

@@ -1,0 +1,198 @@
+﻿@model ePOS3.Models.EditJobControlModel
+@{
+    if (Request.Cookies[".ASPXAUTH"] == null)
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="modal-dialog modal-sm" style="width:80%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Thêm mới giờ đối soát</h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Công ty ĐL:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.PCJobControl, Model.PCList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback" style="padding-bottom: 10px;">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Trạng thái:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <label class="radio-inline"><input type="radio" id="status" name="lever_status" value="0">Không hoạt động</label>
+                        <label class="radio-inline"><input type="radio" id="status" name="lever_status"  checked="checked" value="1">Hoạt động</label>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Cờ hạn mức:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <label class="radio-inline"><input type="radio" id="offFlag" name="lever_offFlag"  value="0">Không</label>
+                        <label class="radio-inline"><input type="radio" id="offFlag" name="lever_offFlag" checked="checked"value="1">Có</label>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Dự kiến CN:</label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="offWork_date" aria-describedby="inputSuccess2Status" >
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <label class="control-label col-md-2 col-sm-2 col-xs-12" style="padding-left:80px;">giờ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12" style="padding-left: 40px;">
+                        <input type="text" id="offWork_time" class="form-control has-feedback-left timepicker" maxlength="8" style="width:80px; padding-left:10px; padding-right:0;" />
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Giờ đối soát:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12" style="padding-left: 20px;">
+                        <input type="text" id="cdrTime" class="form-control has-feedback-left timepicker" maxlength="8"  style="width:80px; padding-left:10px; padding-right:0;" />
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Ngày triển khai:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="open" aria-describedby="inputSuccess2Status">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Kiểu ĐS:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <label class="radio-inline"><input type="radio" id="type" name="lever_type"  value="0">N+1</label>
+                        <label class="radio-inline"><input type="radio" id="type" name="lever_type" checked="checked" value="1">N</label>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Đóng cổng ĐS:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <label class="radio-inline"><input type="radio" id="checkCdr" name="lever_checkCdr"  value="0">Đóng</label>
+                        <label class="radio-inline"><input type="radio" id="checkCdr" name="lever_checkCdr" checked="checked" value="1">Mở</label>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">KT giữ tiền:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <label class="radio-inline"><input type="radio" id="checkKeep" name="lever_checkKeep" value="0">Không</label>
+                        <label class="radio-inline"><input type="radio" id="checkKeep" name="lever_checkKeep" checked="checked" value="1">Có</label>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Đóng cổng NN</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <label class="radio-inline"><input type="radio" id="checkHoliday" name="lever_checkHoliday"  value="0">Đóng</label>
+                        <label class="radio-inline"><input type="radio" id="checkHoliday" name="lever_checkHoliday" checked="checked" value="1">Mở</label>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Đối soát T7:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12" style="padding-left: 20px;">
+                        <input type="text" id="cdrSat" class="form-control has-feedback-left timepicker" maxlength="8" style="width:80px; padding-left:10px; padding-right:0;"/>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Đối soát CN:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12"  style="padding-left: 20px;">
+                        <input type="text" id="cdrSun" class="form-control has-feedback-left timepicker" maxlength="8" style="width:80px; padding-left:10px; padding-right:0;"/>
+                    </div>
+                </div>                
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnAdd" class="btn btn-success">Thêm mới</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('#btnAdd').click(function () {
+            $.ajax({
+                url: '/Help/doAdJobControl',
+                type: 'post',
+                data: {
+                    id: $('#PCJobControl option:selected').val(),
+                    offFlag: $('#offFlag:checked').val(),
+                    offWork_date:$('#offWork_date').val(),
+                    offWork_time: $('#offWork_time').val(),
+                    cdrTime: $('#cdrTime').val(),
+                    open: $('#open').val(),
+                    type: $('#type:checked').val(),
+                    checkCdr: $('#checkCdr:checked').val(),
+                    checkHoliday: $('#checkHoliday:checked').val(),
+                    checkKeep: $('#checkKeep:checked').val(),
+                    status: $('#status:checked').val(),
+                    cdrSat: $('#cdrSat').val(),
+                    cdrSun: $('#cdrSun').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === 'SUCCESS') {
+                        $('#dynamic-modal').modal('hide');
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+ </script>

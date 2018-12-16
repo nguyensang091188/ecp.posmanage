@@ -1,0 +1,177 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{   
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">         
+            <ul class="nav nav-tabs">
+                <li class="nav-item active">
+                    <a href="#AccountInfor" data-toggle="tab">Thông tin tài khoản</a>
+                </li>                    
+            </ul>           
+            <div class="tab-content ">
+                <div class="tab-pane active" id="AccountInfor">
+                    <br />
+                    <div class="col-md-12 col-sm-12 col-xs-12 table_detail" >
+                        <div style="font-size: 16px;padding-top: 5px; color: black; font-weight:bold;">
+                            Thông tin chung
+                        </div> 
+                    </div> 
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12">Tài khoản:</label>
+                            <div class="col-md-9 col-sm-9 col-xs-12">
+                                <b>@posAccount.edong</b>
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12">Họ tên:  </label>
+                            <div class="col-md-9 col-sm-9 col-xs-12">
+                                <b>@posAccount.name</b>                        
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12">Số dư:</label>
+                            <div class="col-md-9 col-sm-9 col-xs-12">
+                                <b style="color:red;">@posAccount.balance.ToString("N0")</b>
+                            </div>
+                        </div>
+                    </form>
+                    <br />
+                    <div class="col-md-12 col-sm-12 col-xs-12 table_detail"> 
+                        <div style="font-size: 16px;padding-top: 5px;color: black; font-weight:bold; float: left">Thông tin chưa xử lý trong tháng   </div>              
+                        <img src="~/images/Refresh_1.png" style="margin-top: 2px; float: left; cursor: pointer; margin-left: 10px;" id="btnRefresh" title="Refresh" />
+                    </div> 
+                   
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12">Yêu cầu hủy:</label>
+                            <div class="col-md-9 col-sm-9 col-xs-12">
+                                <b id="Cancel_request" style="color:red;">@ViewBag.CancelRequest.ToString("N0")</b>
+                                <button id="btnRequest" type="button" class="btn btn-primary" style="margin-left: 10px;">Chi tiết</button>
+                            </div>
+                           
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12">Hóa đơn lỗi:</label>
+                            <div class="col-md-9 col-sm-9 col-xs-12">
+                                <b id="Bill_error" style="color:red;">@ViewBag.BillError.ToString("N0")</b>
+                                <button id="btnBill" type="button" class="btn btn-primary" style="margin-left: 10px;">Chi tiết</button>
+                            </div>
+                           
+                        </div>
+                    </form>
+                </div>                    
+            </div>                        
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal">
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        check_changePass();
+
+        $('#btnRefresh').click(function () {
+            check_CNN(1);
+        });
+        $('#btnRequest').click(function () {
+            if(@ViewBag.CancelRequest > 0){
+                check_CNN(2);
+            }           
+        });
+        $('#btnBill').click(function () {
+            if(@ViewBag.BillError >0){
+                check_CNN(3);
+            }            
+        });
+    });
+    function check_changePass() {
+        if ('@posAccount.changedPIN' != "True") {
+            document.getElementById('msg_info').innerHTML = 'Bạn phải đổi mật khẩu trước khi sử dụng hệ thống!';
+            $("#info").data('index', 13);
+            $('#info').modal('show');
+        }
+    }
+    function check_CNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    if (index == 1) {
+                        $.ajax({
+                            url: '/ePOS/Refresh',
+                            type: 'post',
+                            success: function (data) {
+                                if (data.isRedirect) {
+                                    window.location.href = data.redirectUrl;
+                                } else if (data.Result == "SUCCESS") {
+                                    document.getElementById('Cancel_request').innerHTML = data.CancelBill;
+                                    document.getElementById('Bill_error').innerHTML = data.BillError;
+                                } else {
+                                    document.getElementById('msg_error').innerHTML = data.Message;
+                                    $('#error').modal('show');
+                                }
+                            },
+                            error: function () {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 2) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/ePOS/_CancelRequest',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            type: 'get',
+                            url: '/ePOS/_BillError',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    }
+                }
+            },
+            error: function () {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

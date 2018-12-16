@@ -1,0 +1,160 @@
+﻿@{
+    if (Request.Cookies[".ASPXAUTH"] == null)
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active">
+                    <a href="#FileUpload" >Nhập File</a>
+                </li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="FileUpload">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">                    
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">File:  </label>
+                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                <input type="file" id="uploadFile" accept=".xml" class="form-control" onchange="validate(this.value);">
+                            </div>
+                           <div class="col-md-5 col-sm-5 col-xs-12">
+                               <button type="button" id="btnRead" class="btn btn-danger" disabled >Đọc file</button>
+                               <input type="hidden" id="file_key" />                             
+                           </div>
+                        </div>
+                    </form>
+                    <div id="BillContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var validExtensions = ['xml','XML'];
+    $(document).ready(function () {
+        $('#BillContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: skyblue;'>" +
+                    +"<h4 style='margin-top: 5px; float: left; padding-left: 10px; font-size: 11px;, font-weight: bold;'>Danh sách hóa đơn </h4></div>");
+                toolbar.append(container);
+            },
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Mã GCS', dataField: 'col_1', width: '7%', cellsalign: 'left', align: 'center' },
+                { text: 'Mã khách hàng', dataField: 'col_2', width: '15%', cellsalign: 'left', align: 'center' },
+                { text: 'Tên khách hàng', dataField: 'col_3', width: '20%', cellsalign: 'left', align: 'center' },
+                { text: 'Địa chỉ', dataField: 'col_4', width: '25%', cellsalign: 'left', align: 'center' },
+                { text: 'HĐ', dataField: 'col_5', width: '10%', cellsalign: 'left', align: 'center' },
+                { text: 'Kỳ', dataField: 'col_6', width: '7%', cellsalign: 'left', align: 'center' },
+                { text: 'ĐNTT', dataField: 'col_7', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Tiền điện', dataField: 'col_8', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'VAT', dataField: 'col_9', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Tổng tiền', dataField: 'col_10', width: '10%', cellsalign: 'right', align: 'center' }
+            ]
+        });
+        $('#btnRead').click(function () {
+            $("#uploadFile").val('');
+            $('#btnRead').prop('disabled', true);
+            $('.loading').show();
+            $.ajax({
+                url: '/Import/InserDataBill',
+                type: 'post',
+                data: {
+                    id: encodeURI($('#file_key').val())
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        $("#BillContainer").jqxGrid('refresh');
+                        $("#BillContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceBill(data.Records)) });
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        $('#BillContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (er) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function sourceBill(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function validate(file) {
+        var ext = file.split(".");
+        ext = ext[ext.length - 1].toLowerCase();
+        $('#BillContainer').jqxGrid('clear');
+        if (validExtensions.lastIndexOf(ext) == -1) {
+            $("#uploadFile").val("");
+            document.getElementById('msg_error').innerHTML = 'Định dạng file dữ liệu không đúng';
+            $('#error').modal('show');
+        }
+        else {
+            uploadFile();
+        }
+    }
+    function uploadFile() {
+        var dataFile = new FormData();
+        var files = $("#uploadFile").get(0).files;
+        if (files.length > 0) {
+            dataFile.append("MyFile", files[0]);
+        }
+        $('.loading').show();
+        $.ajax({
+            url: "/Import/UploadFileBill",
+            type: "post",
+            processData: false,
+            contentType: false,
+            data: dataFile,
+            success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                } else if ("SUCCESS") {
+                    $('#file_key').val(data.Message);
+                    $('#btnRead').prop('disabled', false);
+                } else {
+                    $('#btnRead').prop('disabled', true);
+                    $('#file_key').val('');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (er) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

@@ -1,0 +1,391 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.DeliverySPCModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li id="li_sum" class="nav-item active"><a href="#SummaryReport" data-toggle="tab">Tổng hợp</a></li>
+                <li id="li_detail" class="nav-item"><a href="#DetailReport" data-toggle="tab">Chi tiết</a></li>                
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="SummaryReport">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Đơn vị QL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã sổ BBBG:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="BBBG" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã sổ GCS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="BookCMIS" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Account" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Tháng:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.Month, Model.MonthList, new { @class = "form-control chosen-select" })
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Năm:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.Year, Model.YearList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        @*<div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tháng:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Year, Model.YearList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>*@
+                        
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-left ">
+                            <button type="button" id="btnSearchSummaryReport" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportSummary" class="btn btn-primary" disabled title="Xuất báo cáo tổng hợp ra định dạng excel" onclick="checkCNN(1)">Xuất File</button>
+                            <input type="hidden" id="id_sum" />
+                            <input type="hidden" id="obj_sum" />
+                        </div>
+                        
+                    </form>
+                    <div id="SumContainer"></div>
+                </div>
+
+                <div id="DetailReport" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Đơn vị QL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode_Detail, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã sổ BBBG:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="BBBG_Detail" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã sổ GCS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="BookCMIS_Detail" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Account_Detail" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Tháng:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.Month_Detail, Model.MonthList, new { @class = "form-control chosen-select" })
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Năm:</label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                @Html.DropDownListFor(m => m.Year_Detail, Model.YearList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>                                                
+                        
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-left ">
+                            <button type="button" id="btnSearchDetailReport" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportDetail" class="btn btn-primary" disabled title="Xuất báo cáo chi tiết ra định dạng excel" onclick="checkCNN(0)">Xuất File</button>
+                            <input type="hidden" id="id_detail" />
+                            <input type="hidden" id="obj_detail" />
+                        </div>
+                       
+                    </form>                    
+                    <div id="DetailContainer"></div>                    
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var dataSum = null;
+    var dataDetail = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var dataSum = null;
+    var dataDetail = null;
+    var strMaTNV = "";
+    var strTenTNV = "";
+    $(document).ready(function () {
+        $('#SumContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách giao thu</h4></div>");
+                
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: '', width: '3%', pinned: true, cellsrenderer: function (row) {
+                        return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                            ' onclick="Detail(\'' + row + '\')" >' +
+                            '<img src="/images/list_metro.png" title="Chi tiết"/></a></div>';
+                    }
+                },
+                { text: 'Số biên bản', dataField: 'S_ID_REPORT', pinned: true, width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày giao', dataField: 'S_DELIVERY_DATE', pinned: true, width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Mã TNV', dataField: 'S_MA_TNGAN', pinned: true, width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Số GCS', dataField: 'S_GCS_CODE', pinned: true, width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Tháng - năm', dataField: 'S_MONTH_YEAR', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Kỳ', dataField: 'N_PERIOD', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Số KH', dataField: 'N_PAGE_REPORT', cellsformat: 'd', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Số HĐ ', dataField: 'N_HC_BILL_SUM', columngroup: 'HC', cellsformat: 'd', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tiền ', dataField: 'N_HC_BILL_AMOUNT', columngroup: 'HC', cellsformat: 'd', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Thuế ', dataField: 'N_HC_BILL_VAT', columngroup: 'HC', cellsformat: 'd', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Số HĐ ', dataField: 'N_VC_BILL_SUM', columngroup: 'VC', cellsformat: 'd', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tiền ', dataField: 'N_VC_BILL_AMOUNT', columngroup: 'VC', cellsformat: 'd', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Thuế ', dataField: 'N_VC_BILL_VAT', columngroup: 'VC', cellsformat: 'd', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'N_AMOUNT_SUM', width: '10%', cellsformat: 'd', align: 'center', cellsalign: 'right' }
+            ],
+            columngroups: [
+                { text: 'HC', align: 'center', name: 'HC' },
+                { text: 'VC', align: 'center', name: 'VC' }
+            ]
+        });
+
+        $('#btnSearchSummaryReport').click(function (e) {            
+            e.preventDefault();
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SumDeliverySPC',
+                type: 'post',
+                data: {
+                    Branch: $('#PCCode option:selected').val(),
+                    GCSCode: $('#BookCMIS').val(),
+                    Account: $('#Account').val(),
+                    Month: $('#Month option:selected').val(),
+                    Year: $('#Year option:selected').val(),
+                    SoBBBG: $('#BBBG').val(),
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_sum').val(data.id);
+                        $('#obj_sum').val(data.obj);
+                        dataSum = data.Records;
+                        $("#SumContainer").jqxGrid('refresh');
+                        $("#SumContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(dataSum)) });
+                        $('#btnExportSummary').prop('disabled', false);
+                    } else {
+                        $('#id_sum').val('');
+                        $('#id_obj').val('');
+                        dataSum = null;
+                        $('#SumContainer').jqxGrid('clear');
+                        $('#btnExportSummary').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#DetailContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách giao thu</h4></div>");
+                
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'N_ID', width: '5%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Số biên bản', dataField: 'S_ID_REPORT', pinned: true, width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày giao', dataField: 'S_DELIVERY_DATE', pinned: true, width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã TNV', dataField: 'S_EDONG_ACCOUNT', pinned: true, width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Số hóa đơn', dataField: 'S_SO_HDON', pinned: true, width: '8%', cellsalign: 'right', align: 'center' },
+                { text: 'Mã KH', dataField: 'S_CUSTOMER_CODE', width: '15%', cellsalign: 'left', align: 'center' },
+                { text: 'Tên ĐC KH', dataField: 'S_CUSTOMER_NAME', width: '20%', cellsalign: 'left', align: 'center' },
+                { text: 'Số seri', dataField: 'S_SERI_ID', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã GCS', dataField: 'S_GCS_CODE', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã KVUC-STT', dataField: 'S_AREA', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Kỳ-T/N', dataField: 'S_PERIOD_YEAR', width: '7%', align: 'center', cellsalign: 'left' },
+                { text: 'Dịch vụ', dataField: 'S_TYPE', width: '7%', align: 'center', cellsalign: 'left' },
+                { text: 'Số tiền', dataField: 'N_AMOUNT_SUM', width: '10%', cellsformat: 'd', align: 'center', cellsalign: 'right' }
+            ]
+        });
+        $('#btnSearchDetailReport').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/DetailDeliverySPC',
+                type: 'post',
+                data: {
+                    BranchDetail: $('#PCCode_Detail').val(),
+                    GCSCodeDetail: $('#BookCMIS_Detail').val(),
+                    AccountDetail: $('#Account_Detail').val(),
+                    MonthDetail: $('#Month_Detail option:selected').val(),
+                    YearDetail: $('#Year_Detail option:selected').val(),
+                    SoBBBGDetail: $('#BBBG_Detail').val(),
+                    strTenTNV: strTenTNV,
+                    strMaTNV: strMaTNV,
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detail').val(data.id);
+                        $('#obj_detail').val(data.obj);
+                        dataDetail = data.Records;
+                        $("#DetailContainer").jqxGrid('refresh');
+                        $("#DetailContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceDetail(dataDetail)) });
+                        $('#btnExportDetail').prop('disabled', false);
+                    } else {
+                        $('#id_detail').val('');
+                        $('#obj_detail').val('');
+                        dataDetail = null;
+                        $('#DetailContainer').jqxGrid('clear');
+                        $('#btnExportDetail').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function Detail(cellValue) {   
+        var curDate = new Date();
+        var record = $("#SumContainer").jqxGrid('getrowdata', cellValue);
+        if (record.N_MONTH == null || record.N_MONTH == 0) {
+            $("#Month_Detail").val(curDate.getMonth()).trigger('chosen:updated');
+        } else {
+            $("#Month_Detail").val(record.N_MONTH).trigger('chosen:updated');
+        }
+
+        if (record.N_YEAR == null || record.N_YEAR == 0) {
+            $("#Year_Detail").val(curDate.getFullYear()).trigger('chosen:updated');
+        }
+        else {
+            $("#Year_Detail").val(record.N_YEAR).trigger('chosen:updated');
+        }
+        $('#PCCode_Detail').val(record.S_MA_DVIQLY).trigger('chosen:updated');
+
+        $('#BookCMIS_Detail').val(record.S_GCS_CODE);
+        $('#BBBG_Detail').val(record.S_ID_REPORT);
+        $('#Account_Detail').val(record.S_MA_TNGAN);
+        strMaTNV = record.S_MA_TNGAN;
+        strTenTNV = record.S_TEN_TNGAN;
+
+        $('#SummaryReport').removeClass('active');
+        $('#DetailReport').addClass('active');
+        $('#li_sum').removeClass('active');
+        $('#li_detail').addClass('active');
+    }
+    function checkCNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+                else {
+                    if (index == 1) {
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Report/ExpSumDelivery?id=' + encodeURI($('#id_sum').val()) + '&obj=' + encodeURI($('#obj_sum').val());
+                        }
+                    } else {
+                        if ($('#id_detail').val()) {
+                            window.location.href = '/Report/ExpDetailDelivery?id=' + encodeURI($('#id_detail').val()) + '&obj=' + encodeURI($('#obj_detail').val());
+                        }
+                    }
+                }
+            },
+            error: function () {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceSum(data) {
+        var source =
+        {
+            id: 'S_ID_REPORT',
+            localData: data,
+        };
+        return source;
+    }
+    function sourceDetail(data) {
+        var source =
+        {
+            id: 'N_ID',
+            localData: data,
+        };
+        return source;
+    }
+</script>

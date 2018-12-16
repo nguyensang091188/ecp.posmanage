@@ -1,0 +1,101 @@
+﻿@{
+    if (Request.Cookies[".ASPXAUTH"] == null)
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="modal-dialog modal-sm" style="width:40%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Tắt chấm nợ cho điện lực: <b>@ViewBag.pcName</b></h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="Date" aria-describedby="inputSuccess2Status" value="@ViewBag.date">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <label class="control-label col-md-2 col-sm-2 col-xs-12" style="padding-left:90px;">giờ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <input type="text" id="Time" class="form-control has-feedback-left timepicker" maxlength="8" style="margin-left:25px;" value="@ViewBag.time" />
+                    </div>
+                </div>                
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnEdit" class="btn btn-success">Cập nhật</button>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var copiedDate = new Date();
+    $(document).ready(function () {
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#btnEdit').click(function () {
+            $.ajax({
+                url: '/Help/UpdateOnOffCredit',
+                type: 'post',
+                data: {
+                    evn: '@ViewBag.evn',
+                    value: '@ViewBag.value',
+                    date: $('#Date').val(),
+                    time: $('#Time').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {                        
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                        $('#dynamic-modal').modal('hide');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#dynamic-modal').on('hide.bs.modal', function () {
+            location.reload();
+        });
+    });
+
+</script>

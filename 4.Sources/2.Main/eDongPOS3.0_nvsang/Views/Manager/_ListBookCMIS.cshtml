@@ -1,0 +1,207 @@
+﻿@{
+    if (Request.Cookies[".ASPXAUTH"] == null)
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.MapBookCMISModel
+<br />
+<form class="form-horizontal form-label-left input_mask">
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm- col-xs-12">Cty điện lực:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.pcCode, Model.PCList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Số quyển:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            <input type="text" id="book" class="form-control" maxlength="20">
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.statusCMIS, Model.StatusCMISList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-12 col-sm-12 col-xs-12 text-left ">
+            <button type="button" id="btnSearch_BookCMIS" class="btn btn-success">Tìm kiếm</button>
+
+        </div>
+    </div>
+</form>
+<div id="BookCMISContainer"></div>
+
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var dataBookCMIS = null;
+    $(document).ready(function () {
+        $('#pcCode').focus();
+        $("#BookCMISContainer").jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $('<div style="overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;">' +
+                    '<h4 style="margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;">Danh sách giao thu cho ví: ' + '@ViewBag.parent' + '</h4></div>');
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Thêm mới giao thu cho ví: ' + '@ViewBag.parent' + '" onclick="UpdateBookCMIS(\'' + 1 + '\',\'' + 1 + '\')">' +
+                    '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Số quyển', dataField: 'bookCMIS', width: '15%', align: 'left' },
+                { text: 'Điện lực', dataField: 'pcName' },
+                {
+                    text: 'Trạng thái', dataField: 'status', width: '15%',
+                    cellsrenderer: function (row, columnfield, value) {
+                        if (value == 1) {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Đang giao thu</div>';
+                        } else {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Ngừng giao thu</div>';
+                        }
+                    }
+                },
+                {
+                    text: ' ', width: '5%', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 6px; padding-bottom: 6px;"><a href="#" class="navbutton"' +
+                                ' onclick="UpdateBookCMIS(\'' + row + '\',\'' + 0 + '\')" >' +
+                                '<img src="/images/Refresh_1.png" title="Cập nhật trạng thái"/></a></div>';
+                    }
+                }
+            ]
+        });
+        $('#btnSearch_BookCMIS').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/SearchBooCMIS',
+                type: 'post',
+                data: {
+                    edong: '@ViewBag.parent',
+                    bookcmis: $('#book').val(),
+                    pcCode: $('#pcCode option:selected').val(),
+                    pcName: $('#pcCode option:selected').text(),
+                    status: $('#statusCMIS option:checked').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        dataBookCMIS = data.Records;
+                        $("#BookCMISContainer").jqxGrid('refresh');
+                        $("#BookCMISContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceListBookCMIS(dataBookCMIS)) });
+                    } else {
+                        dataBookCMIS = null;
+                        $("#BookCMISContainer").jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function UpdateBookCMIS(cellVallue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Manager/_MapBookCMIS',
+                            data: {
+                                edong: '@ViewBag.parent'
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        $('.loading').show();
+                        $.ajax({
+                            url: '/Manager/UpadetBookCMIS',
+                            type: 'post',
+                            data: {
+                                edong: '@ViewBag.parent',
+                                bookCMIS: $("#BookCMISContainer").jqxGrid('getrowdata', cellVallue).bookCMIS,
+                                pcCode: $("#BookCMISContainer").jqxGrid('getrowdata', cellVallue).pcCode,
+                                status: $("#BookCMISContainer").jqxGrid('getrowdata', cellVallue).status,
+                                datasource: JSON.stringify(dataBookCMIS)
+                            },
+                            success: function (data) {
+                                $('.loading').hide();
+                                if (data.isRedirect)
+                                    window.location.href = data.redirectUrl;
+                                if (data.Result == "SUCCESS") {
+                                    dataBookCMIS = data.Records;
+                                    $("#BookCMISContainer").jqxGrid('refresh');
+                                    $("#BookCMISContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceListBookCMIS(dataBookCMIS)) });
+                                    document.getElementById('msg_info').innerHTML = data.Message;
+                                    $('#info').modal('show');
+
+                                } else {
+                                    document.getElementById('msg_error').innerHTML = data.Message;
+                                    $('#error').modal('show');
+                                }
+                            },
+                            error: function (ErrorThrown) {
+                                $('.loading').hide();
+                                window.location.href = '@Url.Action("Login", "ePOS")';
+                            }
+                        });
+                    }                    
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceListBookCMIS(data) {
+        var source =
+        {
+            id: 'bookCMIS',
+            localData: data,
+        };
+        return source;
+    }
+</script>

@@ -1,0 +1,332 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.CheckDebtModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#CheckDebt" data-toggle="tab">Báo cáo tồn</a></li>
+                <li class="nav-item"><a href="#AddCheckDebt" data-toggle="tab">Thêm check tồn</a></li>
+               
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="CheckDebt">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã yêu cầu:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Deb_Id" class="form-control" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Số ví:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Deb_Edong" class="form-control" maxlength="15" value="@posAccount.edong">
+                            </div>
+                        </div>                        
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Yêu cầu từ ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Deb_FromDate" aria-describedby="inputSuccess2Status"  value="@DateTime.Today.ToString("dd/MM/yyyy")">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">đến ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Deb_ToDate" aria-describedby="inputSuccess2Status"  value="@DateTime.Today.ToString("dd/MM/yyyy")">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                       
+                        <div class="col-md-3 col-sm-3 col-xs-12 text-left ">
+                            <button type="button" id="btnDebtSearch" class="btn btn-success">Tìm kiếm</button>                               
+                        </div>
+                       
+                    </form>
+                    <div id="CheckDebtContainer"></div>
+                </div>
+
+                <div id="AddCheckDebt" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Kiểm tra tồn:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <div class="form-check form-check-inline col-md-6 col-sm-6 col-xs-12">
+                                        <label class="form-check-label">
+                                            <input class="form-check-input" type="radio" name="Stock_Type" id="Stock_Type1" value="1" checked="checked"> Mã KH
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline col-md-6 col-sm-6 col-xs-12">
+                                        <label class="form-check-label">
+                                            <input class="form-check-input" type="radio" name="Stock_Type" id="Stock_Type2" value="2"> Mã GCS
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                           
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">CT điện lực:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                   @Html.DropDownListFor(m => m.Stock_PC, Model.PCList, new { @class = "form-control chosen-select" })     
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Số ví:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                   @Html.DropDownListFor(m => m.Stock_Edong, Model.EdongList, new { @class = "form-control chosen-select" })     
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Email:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <textarea class="form-control" id="Stock_Email" rows="3" >@posAccount.email</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH/GCS:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <textarea class="form-control" id="Stock_Code" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnAddCheckStock" class="btn btn-success">Thêm mới</button>                              
+                            </div>
+                        </div>
+                    </form>                    
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var dataSum = null;
+    var dataDetail = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        paint();
+        $('#Deb_Id').forceNumeric();
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#CheckDebtContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center; background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách yêu cầu check tồn</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            altrows: true,
+            columns: [
+                { text: 'Mã YC', width: '6%', dataField: 'requestId', align: 'center', pinned: true, },
+                { text: 'Số ví yêu cầu', dataField: 'edong', width: '15%', align: 'center', pinned: true, },
+                { text: 'Email', dataField: 'email', width: '20%', align: 'center', cellsalign: 'right', pinned: true, },
+                {
+                    text: 'Đầu vào', dataField: 'fileInputPath', width: '6%', cellsrenderer: function (row, columnfield, value) {
+                        if (value) {
+                            return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                                ' onclick="checkCNN(\'' + row + '\',\'' + 0 + '\')" >' +
+                                '<img src="/images/icon_upload.png" title="Dowload File đầu vào"/></a></div>';
+                        }
+                        else
+                            return ' ';
+                    }
+                },
+                {
+                    text: 'Đầu ra', dataField: 'fileOutputPath', width: '6%', cellsrenderer: function (row, columnfield, value) {
+                        if (value) {
+                            return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 1 + '\')" >' +
+                            '<img src="/images/icon_download.png" title="Dowload File đầu ra"/></a></div>';
+                        } else
+                            return ' ';
+                    }
+                },
+                { text: 'Thời gian', dataField: 'createDate', width: '15%', cellsalign: 'right', align: 'center' },
+                { text: 'Trạng thái', dataField: 'status', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Chi tiết', dataField: 'description', width: '22%', align: 'center', cellsalign: 'right' }
+            ]
+        });
+        $('#btnDebtSearch').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchCheckDebt',
+                type: 'post',
+                data: {
+                    Deb_Id: $('#Deb_Id').val(),
+                    Account: $('#Deb_Edong').val(),
+                    FromDate: $('#Deb_FromDate').val(),
+                    ToDate: $('#Deb_ToDate').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $("#CheckDebtContainer").jqxGrid('refresh');
+                        $("#CheckDebtContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceCheck(data.Records)) });
+                    } else {
+                        $("#CheckDebtContainer").jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#Stock_PC').change(function () {           
+            paint();              
+        });
+        $('#btnAddCheckStock').click(function () {           
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/AddCheckDebt',
+                type: 'post',
+                data: {
+                    type: $('input[name=Stock_Type]:checked').val(),
+                    pc: $("#Stock_PC option:selected").val(),
+                    edong: $('#Stock_Edong option:selected').val(),
+                    email: $('#Stock_Email').val(),
+                    code: $('#Stock_Code').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#Stock_Email').val('@posAccount.email');
+                        $('#Stock_Code').val('');
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+    });
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    if (index == 0) {
+                        window.location.href = '/Report/ExportCheckDebtIn?filePath=' + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).fileInputPath)) +
+                            "&edong=" + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).edong)) +
+                            "&createDate=" + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).createDate)) +
+                            "&requestId=" + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).requestId));
+                    }
+                    else {
+                        window.location.href = '/Report/ExportCheckDebtOut?filePath=' + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).fileOutputPath)) +
+                            "&edong=" + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).edong)) +
+                            "&createDate=" + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).createDate)) +
+                            "&requestId=" + encodeURI(JSON.stringify($("#CheckDebtContainer").jqxGrid('getrowdata', cellValue).requestId));
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceCheck(data) {
+        var source =
+        {
+            id: 'requestId',
+            localData: data,
+        };
+        return source;
+    }
+    function paint() {
+        var check = $("#Stock_PC option:selected").val();
+        if (check.includes("PA") || check.includes("PH")) {
+            $("#Stock_Type1").prop("disabled", true);
+            $("#Stock_Type2").prop("checked", true);
+        }
+        else {
+            $("#Stock_Type1").prop("disabled", false);
+            $("#Stock_Type1").prop("checked", true);
+        }   
+    }
+</script>

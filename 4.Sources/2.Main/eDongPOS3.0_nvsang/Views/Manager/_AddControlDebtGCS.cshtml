@@ -1,0 +1,143 @@
+﻿@model ePOS3.Models.AddControlDebtModel
+<div class="modal-dialog modal-sm" style="width:50%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Thiết lập chấm nợ GCS</h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Tổng công ty:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_Corporation, Model.CorporationList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Điện lực:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_PC, Model.PCList, new { @multiple = "multiple" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Số ngày giữ sau phiên GCS:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_Day_1, Model.Day_1_List, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Số ngày giữ sau TT:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_Day_2, Model.Day_2_List, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Ngày bắt đầu không giữ:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_Day_3, Model.Day_3_List, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Chấm EVN vào thứ 7:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <div id="EVN_T7" style="margin-top:5px;"></div>
+                    </div>
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Chấm EVN vào CN:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <div id="EVN_CN" style="margin-top:5px;"></div>
+                    </div>
+                </div>               
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnAdd" class="btn btn-success">Thêm mới</button>
+           
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('#Add_PC').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            nonSelectedText: "Chọn điện lực",
+            nSelectedText: "điện lực được chọn"
+        });
+        $('#EVN_T7').jqxSwitchButton({ height: 23, width: 60, checked: true });
+        $('#EVN_CN').jqxSwitchButton({ height: 23, width: 60, checked: true });      
+        $('#Add_Corporation').change(function () {
+            $.ajax({
+                url: '/ePOS/getPCbyEVN',
+                type: 'post',
+                data: {
+                    id: $("#Add_Corporation option:selected").val(),
+                    index: '2',
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    $('#Add_PC').empty();
+                    $.each(data.Data, function (index, optionData) {
+                        $("#Add_PC").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                    });
+                    $("#Add_PC").multiselect('rebuild');
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        });
+        $('#btnAdd').click(function () { 
+            $.ajax({
+                url: '/Manager/doAddControlDebtGCS',
+                type: 'post',
+                data: {     
+                    pc: getPC(2),
+                    day_1: $("#Add_Day_1 option:selected").val(),
+                    day_2: $("#Add_Day_2 option:selected").val(),
+                    day_3: $("#Add_Day_3 option:selected").val(),
+                    check_T7: $('#EVN_T7').val(),
+                    check_CN: $('#EVN_CN').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    if (data.Result === 'SUCCESS') {
+                        $('#dynamic-modal').modal('hide');
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        //if (data.index != 0) {
+                        //    if (data.index == 1) {
+                        //        $("#error").data('myControl', 'Add_Email');
+                        //    }
+                        //}
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });            
+        });
+    });
+</script>

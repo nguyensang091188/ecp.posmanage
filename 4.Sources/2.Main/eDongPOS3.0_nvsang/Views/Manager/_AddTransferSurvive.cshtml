@@ -1,0 +1,213 @@
+﻿@model ePOS3.Models.TransferSurviveModel
+<div class="modal-dialog modal-sm" style="width:60%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Thêm mới chuyển tồn </h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Sổ GCS:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <textarea class="form-control" id="Add_BookCMIS" rows="3"></textarea>     
+                    </div> 
+                </div>
+                
+                <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">TK ví mới:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_Account, Model.AccList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Hạn thu tồn:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="Add_ToDate" aria-describedby="inputSuccess2Status" value="@ViewBag.date">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-2 col-xs-12">
+                    <button type="button" class="btn btn-primary" onclick="Check()">Kiểm tra</button>
+                </div> 
+                <div id="CheckContainer"></div>  
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnAdd" class="btn btn-success" disabled>Thêm mới</button>
+            <input type="hidden" id="i_check" value="0" />
+            <input type="hidden" id="pc" />
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 5 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var value_cb = null;
+    $(document).ready(function () {
+        
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#CheckContainer').jqxGrid({
+            width: '100%',
+            height: '300px',
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;' >Danh sách chuyển tồn</h4></div>");
+                toolbar.append(container);
+            },
+            selectionmode: 'checkbox',
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '10%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Sổ GCS', dataField: 'col_2', width: '30%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Số khách hàng', dataField: 'col_3', width: '28%', align: 'center', cellsalign: 'right' },
+                { text: 'Số hóa đơn tồn', dataField: 'col_4', width: '28%', align: 'center', cellsalign: 'right' }
+            ]
+        });
+        $('#btnAdd').click(function () {
+            if ($('#i_check').val() == 0) {
+                document.getElementById('msg_error').innerHTML = 'Vui lòng kiểm tra thông tin sổ tồn trước khi thêm mới';
+                $('#error').modal('show');               
+            } else if (!$("#Add_Account option:selected").val()) {
+                document.getElementById('msg_error').innerHTML = 'Vui lòng chọn tài khoản ví mới';
+                $("#error").data('myControl', 'Add_Account');
+                $('#error').modal('show');
+            }
+            else {
+                $('.loading').show();
+                $.ajax({
+                    url: '/Manager/doAddTransferSurvive',
+                    type: 'post',
+                    data: {
+                        pcCode: $('#pc').val(),
+                        data: JSON.stringify($('#CheckContainer').jqxGrid('getselectedrowindexes')),
+                        source: JSON.stringify(dataCheck),
+                        account: $("#Add_Account option:selected").val(),
+                        date: $('#Add_ToDate').val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect) {
+                            window.location.href = data.redirectUrl;
+                        }
+                        else if (data.Result == 'SUCCESS') {                          
+                            $('#dynamic-modal').modal('hide');
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function () {
+                        $('.loading').hide();                     
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                })
+            }
+        });
+    });
+    function Check() {
+        if (!$('#Add_BookCMIS').val()) {           
+            $("#error").data('myControl', 'Add_BookCMIS');
+            document.getElementById('msg_error').innerHTML = 'Vui lòng nhập sổ GCS';
+            $('#error').modal('show');
+        } else {
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/getInfoBookCMIS',
+                type: 'post',
+                data: {
+                    pcCode: $("#Add_PCCode option:selected").val(),
+                    bookCMIS: $('#Add_BookCMIS').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == 'SUCCESS') {
+                        if (data.Records != null) {
+                            if (data.count > 0) {
+                                $('#i_check').val('1')
+                                $('#btnAdd').prop('disabled', false);                               
+                                $('#pc').val(data.pc);
+                            }
+                            else {
+                                $('#pc').val('');
+                                $('#i_check').val('0')
+                                $('#btnAdd').prop('disabled', false);
+                            }
+                        }
+                        else {
+                            $('#pc').val('');
+                            $('#i_check').val('0')
+                            $('#btnAdd').prop('disabled', false);
+                        }
+                        dataCheck = data.Records;
+                        $("#CheckContainer").jqxGrid('refresh');
+                        $("#CheckContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceCheck(dataCheck)) });
+                    } else {
+                        dataCheck = null;
+                        $('#pc').val('');
+                        $('#i_check').val('0')
+                        $('#CheckContainer').jqxGrid('clear');                       
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        }
+    }
+    function sourceCheck(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+</script>

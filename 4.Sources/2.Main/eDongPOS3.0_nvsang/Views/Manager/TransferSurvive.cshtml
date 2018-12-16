@@ -1,0 +1,241 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.TransferSurviveModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#TransferSurive" data-toggle="tab">Chuyển tồn</a></li>               
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="TransferSurive">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">TK ví mới:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Account, Model.AccList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Sổ GCS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <textarea class="form-control" id="BookCMIS" rows="3"></textarea>                              
+                            </div>                           
+                        </div>
+                        
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Hạn thu tồn từ ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-4 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">đến ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                            <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>
+                        </div> 
+                    </form>
+                    <div id="TranferContainer"></div>  
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }        
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+       // $(".chosen-select").chosen({ enable_split_word_search: true });
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#TranferContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách chuyển tồn</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" onclick="check_Add()" title="Thêm mới">' +
+                    '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '6%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Công ty điện lực', dataField: 'col_2', width: '32%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Sổ GCS', dataField: 'col_3', width: '10%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Tài khoản ví mới', dataField: 'col_4', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Hạn thu tồn', dataField: 'col_5', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Số khách hàng', dataField: 'col_6', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Số HĐ tồn', dataField: 'col_7', width: '10%', align: 'center', cellsalign: 'right' },
+                {
+                    text: ' ', width: '3%', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                            ' onclick="Delete(\'' + row + '\')" >' +
+                            '<img src="/images/icon_del.png" title="Xóa chuyển tồn"/></a></div>';
+                    }
+                },
+            ]
+        });
+
+        $('#btnSearch').click(function () {            
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/getTransferSurvive',
+                type: 'post',
+                data: {
+                    pcCode: $('#PCCode option:selected').val(),
+                    bookCMIS: $('#BookCMIS').val(),
+                    edong: $('#Account option:selected').val(),
+                    FromDate: $('#FromDate').val(),
+                    ToDate: $('#ToDate').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        dataTranfer = data.Records;
+                        $("#TranferContainer").jqxGrid('refresh');
+                        $("#TranferContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceTrafer(dataTranfer)) });
+                    }
+                    else {
+                        dataTranfer = null;
+                        $('#TranferContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function sourceTrafer(data) {
+        var source =
+        {
+            id: 'col_9',
+            localData: data,
+        };
+        return source;
+    }
+    function check_Add() {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    $.ajax({
+                        type: 'get',
+                        url: '/Manager/_AddTransferSurvive',
+                        success: function (data) {
+                            $('#dynamic-modal').html(data);
+                            $("#dynamic-modal").modal('show');
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function Delete(cellValue) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn xóa bản ghi?';
+                    $("#yesno").data('index', 6);
+                    $('#yesno').data('cellValue', cellValue);                   
+                    $('#yesno').modal('show');
+                }                
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

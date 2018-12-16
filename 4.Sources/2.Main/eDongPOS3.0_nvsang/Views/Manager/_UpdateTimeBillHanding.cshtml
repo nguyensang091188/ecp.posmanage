@@ -1,0 +1,97 @@
+﻿<div class="modal-dialog modal-sm" style="width:550px; ">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Cập nhật thời gian chấm nợ</h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Ngày chấm:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="edit_date" aria-describedby="inputSuccess2Status" value="@ViewBag.date">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12" style="padding-left:90px;">giờ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <input type="text" id="edit_time" class="form-control has-feedback-left timepicker" style="width:80px; padding-left:10px; padding-right:0" maxlength="6" value="@ViewBag.time" />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnEdit" class="btn btn-success">Cập nhật</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#btnEdit').click(function () {
+            if (!$("#edit_date").val()) {
+                document.getElementById('msg_error').innerHTML = 'Ngày chấm không được để trống';
+                $("#error").data('myControl', 'edit_date');
+                $('#error').modal('show');
+            } else if (!$("#edit_time").val()) {
+                $("#error").data('myControl', 'edit_time');
+                document.getElementById('msg_error').innerHTML = 'Giờ chấm không được để trống';
+                $('#error').modal('show');
+            } else {
+              
+                $.ajax({
+                    url: '/Manager/UpdateTransOff',
+                    type: 'post',
+                    data: {
+                        id: '@ViewBag.id',
+                        datasource: $('#id_sum').val(),
+                        date: $('#edit_date').val(),
+                        time: $('#edit_time').val()
+                    },
+                    success: function (data) {
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        if (data.Result == "SUCCESS") {
+                            $('#dynamic-modal').modal('hide');
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $("#info").data('index', 11);
+                            $('#info').modal('show');
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (errorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });                
+            }
+        });
+    });
+</script>

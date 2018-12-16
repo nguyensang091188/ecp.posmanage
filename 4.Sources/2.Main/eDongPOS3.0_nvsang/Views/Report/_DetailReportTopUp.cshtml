@@ -1,0 +1,264 @@
+﻿@model ePOS3.Models.ReportDetailTopup
+<br />
+<form class="form-horizontal form-label-left input_mask">
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Dịch vụ:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.Service_Topup, Model.ServiceList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Nhà CC:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.PC_Topup, Model.PCList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.Status_Topup, Model.StatusList, new { @class = "form-control chosen-select" })
+
+        </div>
+    </div>
+   
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.AccParent_Topup, Model.ParentList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.AccChild_Topup, Model.ChildList, new { @multiple = "multiple" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            <input type="text" id="Customer_Topup" class="form-control" maxlength="15">
+        </div>
+    </div>
+    <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Từ ngày:</label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_FromDate_Topup" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">đến ngày:  </label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_ToDate_Topup" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+            <button type="button" id="btnSearchDetailReportTopup" class="btn btn-success">Tìm kiếm</button>
+            <input type="hidden" id="id_DetailTopup" />
+            
+        </div>
+    </div>
+</form>
+<div id="DetailTopupContainer"></div>
+<script type="text/javascript">
+    var dataDetailTopup = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#AccChild_Topup').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#AccParent_Topup').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccParent_Topup option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccChild_Topup').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccChild_Topup").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccChild_Topup").multiselect('rebuild');
+                    } else {
+                        $('#AccChild_Topup').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#Service_Topup').change(function () {
+            $.ajax({
+                url: '/Report/ChangePC',
+                type: 'post',
+                data: {
+                    service: $('#Service_Topup option:selected').val(),
+                    index: 1
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#PC_Topup').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#PC_Topup").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#PC_Topup").trigger('chosen:updated');
+                        $("#PC_Topup").change();
+                    } else {
+                        $('#PC_Topup').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#DetailTopupContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Báo cáo chi tiết [ Tổng giao dịch: <span id='total_tran_topup' style='color: red;'>0</span>, Tổng tiền: <span id='total_amount_topup' style='color: red;'>0</span> ]</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" title="Xuất báo cáo chi tiết ra định dạng excel" onclick="checkCNN(\'' + 7 + '\')">' +
+                    '<img src="/Images/excel_2010.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Kết xuất</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            //pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Ngày TT', dataField: 'col_2', width: '10%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Ví thanh toán', dataField: 'col_3', width: '13%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },               
+                { text: 'Dịch vụ', dataField: 'col_4', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Nhà CC', dataField: 'col_5', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Mệnh giá', dataField: 'col_6', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Chiết khấu', dataField: 'col_7', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Tiền thanh toán', dataField: 'col_8', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Mã khách hàng', dataField: 'col_9', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Trạng thái', dataField: 'col_10', width: '10%', align: 'center', cellsalign: 'left' }
+            ]
+        });        
+        $('#btnSearchDetailReportTopup').click(function () {
+            var paginginformation = $('#DetailTopupContainer').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetail_Water',
+                type: 'post',
+                data: {
+                    pcCode: $('#PC_Topup option:selected').val(),
+                    account: $('#AccParent_Topup option:selected').val(),
+                    edong: getChildSelected(3),
+                    customer: $('#Customer_Topup').val(),
+                    fromdate: $('#Syn_Upload_FromDate_Topup').val(),
+                    todate: $('#Syn_Upload_ToDate_Topup').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_DetailWater').val(data.id);
+                        $('#id_fromdate').val(data.fromdate);
+                        $('#id_todate').val(data.todate);
+                        $('#total_bill_water').text(data.total_bill);
+                        $('#total_amount_water').text(data.total_amount);
+                        $('#total_tran_water').text(data.total_tran);
+                        $("#DetailTopupContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetaiTopup(data));
+                        $("#DetailTopupContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $("#DetailWaterContainer").jqxGrid('updatebounddata', 'cells');
+                    } else {
+                        $('#total_tran_water').text(0);
+                        $('#total_amount_water').text(0);
+                        $('#total_bill_water').text(0);
+                        $('#id_DetailWater').val('');
+                        $('#id_fromdate').val('');
+                        $('#id_todate').val('');
+                        $('#DetailTopupContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+
+    function sourceDetaiTopup(data) {
+        var source =
+        {
+            datatype: "array",
+            localData: data.Records,
+            totalrecords: data.total_tran,
+            root: 'Rows',
+            beforeprocessing: function (data) {
+                source.totalrecords = data[0].col_11;
+            }
+        };
+        return source;
+    }
+</script>

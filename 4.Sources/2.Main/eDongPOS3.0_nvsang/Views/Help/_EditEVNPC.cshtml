@@ -1,0 +1,224 @@
+﻿@model ePOS3.Models.EVNPCModel
+@{
+    if (Request.Cookies[".ASPXAUTH"] == null)
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="modal-dialog modal-sm" style="width:70%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Cập nhật thông tin: <b>@ViewBag.FullName</b> </h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Tổng CTY:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Corporation, Model.Corporations, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Công ty ĐL:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mã đơn vị:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="CodePC" class="form-control" maxlength="10" value="@ViewBag.CodePC">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Tên đầy dủ:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="FullName" class="form-control" maxlength="200" value="@ViewBag.FullName">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Tên viết tắt:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="ShortName" class="form-control" maxlength="200" value="@ViewBag.ShortName">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mã mở rộng:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Ext" class="form-control" maxlength="10" value="@ViewBag.Ext">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">SĐT CSKH:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Phone1" class="form-control" maxlength="15" value="@ViewBag.Phone1">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">SĐT SC:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Phone2" class="form-control" maxlength="15" value="@ViewBag.Phone2">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Email-To:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <textarea class="form-control" id="MailTo" rows="2" maxlength="200">@ViewBag.MailTo</textarea>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Email-CC:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <textarea class="form-control" id="MailCc" rows="2" maxlength="200">@ViewBag.MailCC</textarea>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Địa chỉ:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <textarea class="form-control" id="AddressPC" rows="3" maxlength="200">@ViewBag.AddressPC</textarea>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mã số thuế:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="Tax_Code" class="form-control" maxlength="30" value="@ViewBag.TaxCode">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mã đối tác:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="ProviderCode" class="form-control" maxlength="20" value="@ViewBag.ProviderCode">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mã thẻ ĐL:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <input type="text" id="CardEVN" class="form-control" maxlength="3" value="@ViewBag.CardEVN">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Trạng thái:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @if (ViewBag.status == 0)
+                        {
+                            <label class="radio-inline"><input type="radio" id="Status" name="lever" checked="checked" value="0">Chưa triển khai</label>
+                            <label class="radio-inline"><input type="radio" id="Status" name="lever" value="1">Đã triển khai</label>
+                        }
+                        else
+                        {
+                            <label class="radio-inline"><input type="radio" id="Status" name="lever" value="0">Chưa triển khai</label>
+                            <label class="radio-inline"><input type="radio" id="Status" name="lever" checked="checked"  value="1">Đã triển khai</label>
+                        }
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnEdit" class="btn btn-success">Cập nhật</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('#Corporation').prop('disabled', true).trigger("chosen:updated");
+        $('#PCCode').prop('disabled', true).trigger("chosen:updated");
+        $('#CodePC').prop('disabled', true);
+        $('#FullName').focus();
+        $('#Phone1').forceNumeric();
+        $('#Phone2').forceNumeric();
+        $('#CardEVN').forceNumeric();
+        $('#btnEdit').click(function () {
+            $.ajax({
+                url: '/Help/EditPC',
+                type: 'post',
+                data: {
+                    pcId: '@ViewBag.pcId',
+                    evn: $("#Corporation option:selected").val(),
+                    parentid: $("#PCCode option:selected").val(),
+                    parentname: $("#PCCode option:selected").text(),
+                    code: $('#CodePC').val(),
+                    fullname: $('#FullName').val(),
+                    shortname: $('#ShortName').val(),
+                    ext: $('#Ext').val(),
+                    address: $('#AddressPC').val(),
+                    phone1: $('#Phone1').val(),
+                    phone2: $('#Phone2').val(),
+                    mailTo: $('#MailTo').val(),
+                    mailCc: $('#MailCc').val(),
+                    status: $('#Status:checked').val(),
+                    tax: $('#Tax_Code').val(),
+                    cardEVN: $('#CardEVN').val(),
+                    datasource: JSON.stringify(datasourePC),
+                    id_edit: '@ViewBag.index',
+                    providerCode: $('#ProviderCode').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    if (data.Result === 'SUCCESS') {
+                        datasourePC = data.Records;
+                        $("#EVNPCContainer").jqxGrid('refresh');
+                        $("#EVNPCContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourcePC(datasourePC)) });
+                        $("#EVNPCContainer").jqxGrid('selectrow', data.index);
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        if (data.index != 0) {
+                            if (data.index == 1)
+                                $("#error").data('myControl', 'CodePC');                               
+                            if (data.index == 2)
+                                $("#error").data('myControl', 'FullName');                               
+                            if (data.index == 3)
+                                $("#error").data('myControl', 'Ext');                               
+                            if (data.index == 4)
+                                $("#error").data('myControl', 'MailTo');                                
+                            if (data.index == 5)
+                                $("#error").data('myControl', 'MailCc');                                
+                            if (data.index == 6)
+                                $("#error").data('myControl', 'ProviderCode');                               
+                            if (data.index == 7)
+                                $("#error").data('myControl', 'CardEVN');                               
+                        }
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        changePC();
+    });
+    function changePC() {
+        var x = $("#Corporation option:selected").val();
+        if (x === '1' || x === '2') {
+            $('#PCCode').prop('disabled', true).trigger("chosen:updated");
+            $("#PCCode").empty();
+            $("#PCCode").append("<option value='" + " " + "'>" + " " + "</option>");
+            $("#PCCode").trigger('chosen:updated');
+            $("#PCCode").change();
+        } else
+            $('#PCCode').prop('disabled', false).trigger("chosen:updated");
+    }
+</script>

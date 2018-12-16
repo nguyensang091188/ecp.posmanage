@@ -1,0 +1,79 @@
+﻿<div class="modal-dialog modal-sm" style="width:900px; height: 500px;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Thông tin chi tiết</h5>
+        </div>
+        <div class="modal-body">
+            <div id="GridBill"></div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#GridBill").jqxGrid({
+            width: '100%',
+            height: '430px',
+            //renderToolbar: function (toolbar) {
+            //    var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: skyblue;'><h4 style='margin-top: 5px; float: left; padding-left: 10px;'>Chi tiết hóa đơn </h4></div>");
+            //    toolbar.append(container);
+            //},
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: false,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: '', datafield: '', columntype: 'number', width: '5%',
+                    cellsrenderer: function (row, column, value) {
+                        return "<div style='margin:4px;'>" + (value + 1) + "</div>";
+                    }
+                },
+                { text: '', dataField: 'col_1', width: 160, align: 'center', cellsalign: 'left' },
+                { text: '', dataField: 'col_2', width: 277, align: 'center', cellsalign: 'left' }
+            ]
+        });
+        getBill();
+    });
+    function getBill() {
+        $.ajax({
+            url: '/Help/DetailBill',
+            type: 'post',
+            data: {
+                row: '@ViewBag.id'
+            },
+            success: function (data) {
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                if (data.Result == 'SUCCESS') {
+                    $("#GridBill").jqxGrid('refresh');
+                    $("#GridBill").jqxGrid({ source: new $.jqx.dataAdapter(sourceListBill(data.Records)) });
+                } else {
+                    $('#GridBill').jqxGrid('clear');
+                    document.getElementById('msg-info').style.font = "italic bold 20px time new roman,serif";
+                    document.getElementById('msg-info').innerHTML = data.Message;
+                    $("#dialog-info").dialog('open');
+                }
+            },
+            error: function () {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceListBill(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+</script>

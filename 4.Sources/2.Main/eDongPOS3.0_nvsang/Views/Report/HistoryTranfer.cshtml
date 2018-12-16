@@ -1,0 +1,182 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#Customer" data-toggle="tab">Khách hàng</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="Customer">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="txtCustomer" class="form-control" maxlength="20">
+                            </div>
+                        </div>   
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-left ">
+                            <button type="button" id="btnSearchCustomer" class="btn btn-success">Tìm kiếm</button>
+                        </div>
+                        @*<div class="form-group col-md-12 col-xs-12">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchCustomer" class="btn btn-success">Tìm kiếm</button>                               
+                            </div>
+                        </div>*@
+                    </form>
+                    <div id="CustomerContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#CustomerContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách hóa đơn</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                 {
+                     text: '', width: '3%', cellsrenderer: function (row) {
+                         return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                             ' onclick="Detail(\'' + row + '\')" >' +
+                             '<img src="/images/list_metro.png" title="Chi tiết"/></a></div>';
+                     }
+                 },
+                { text: 'Mã khách hàng', dataField: 'col_2', width: '12%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên khách hàng', dataField: 'col_3', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'col_4', width: '31%', align: 'center', cellsalign: 'left' },
+                { text: 'Số tiền', dataField: 'col_5', width: '12%', align: 'center', cellsalign: 'right' },
+                { text: 'Kỳ', dataField: 'col_6', width: '10%', align: 'center', },
+                { text: 'Trạng thái', dataField: 'col_7', width: '12%', align: 'center', },
+            ]
+        });
+        $('#btnSearchCustomer').click(function () {          
+            if (!$("#txtCustomer").val()) {
+                document.getElementById('msg_error').innerHTML = 'Phải nhập thông tin mã khách hàng!';
+                $("#error").data('myControl', 'txtCustomer');
+                $('#error').modal('show');
+            }else {
+                $('.loading').show();
+                $.ajax({
+                    url: '/Report/SearchHistoryCust',
+                    type: 'post',
+                    data: {
+                        customer: $('#txtCustomer').val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        if (data.Result == "SUCCESS") {
+                            $("#CustomerContainer").jqxGrid('refresh');
+                            $("#CustomerContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceCust(data.Records)) });
+                        }
+                        else {
+                            $('#CustomerContainer').jqxGrid('clear');
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            }
+        });
+    });
+    function sourceCust(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function Detail(cellValue) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    $.ajax({
+                        type: 'get',
+                        url: '/Report/_DetailHistory',
+                        data: {
+                            BillId: encodeURI($("#CustomerContainer").jqxGrid('getrowdata', cellValue).col_1),
+                            Customer: encodeURI($("#CustomerContainer").jqxGrid('getrowdata', cellValue).col_2),
+                            Amount: encodeURI($("#CustomerContainer").jqxGrid('getrowdata', cellValue).col_5),
+                            Period: encodeURI($("#CustomerContainer").jqxGrid('getrowdata', cellValue).col_6),
+                        },
+                        success: function (data) {
+                            $('#dynamic-modal').html(data);
+                            $("#dynamic-modal").modal('show');
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                    //$("body").addClass("loading");
+                    //$('#dialog-stock').dialog({
+                    //    autoOpen: false,
+                    //    position: ["center", "center"],
+                    //    height: 500,
+                    //    width: 1250,
+                    //    resizable: true,
+                    //    modal: true,
+                    //    title: "Danh sách chi tiết",
+                    //    create: function (event) { $(event.target).parent().css('position', 'fixed'); },
+                    //    open: function (event, ui) {
+                    //        $(this).load("/Report/DetailHistory?id=" + encodeURI(JSON.stringify($("#CustomerContainer").jqxGrid('getrowdata', cellValue))));
+                    //    },
+                    //    close: function () {
+                    //        $("body").removeClass("loading");
+                    //        $("#dialog-stock").dialog("close");
+                    //    }
+                    //});
+                    //$('#dialog-stock').dialog('open');
+                }
+            },
+            error: function () {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        })
+    }
+</script>

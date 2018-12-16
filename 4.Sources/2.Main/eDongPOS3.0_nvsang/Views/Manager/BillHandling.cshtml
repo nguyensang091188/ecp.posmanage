@@ -1,0 +1,437 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.BillHandlingModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#BillHandling" data-toggle="tab">Đang xử lý chấm nợ</a></li>
+                <li class="nav-item" id="idBillTotal"><a href="#BillTotal" data-toggle="tab">Tổng hợp</a></li>
+                
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="BillHandling">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Account, Model.AccList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Customer" class="form-control" maxlength="15" >
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm- col-xs-12">Loại giữ :</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Type, Model.TypeList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status, Model.StatusList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="width:110px;">Thu từ ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Fromdate" aria-describedby="inputSuccess2Status" value="@DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy")">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12" style="padding-left:90px;">giờ:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12" style="padding-left: 50px;" >
+                                <input type="text" id="Time_From" class="form-control has-feedback-left timepicker" style="width:80px; padding-left:10px;" maxlength="8" />
+                              
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12" style="width:110px; margin-left:-20px;">đến ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="Todate" aria-describedby="inputSuccess2Status" value="@DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy")">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12" style="padding-left: 90px;">giờ:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12"  style="padding-left:30px;">
+                                <input type="text" id="Time_To" class="form-control has-feedback-left timepicker" maxlength="8" style="width:80px; padding-left:10px;" />
+                            </div>
+                        </div>                      
+                        <br />
+                        <div class="form-group">
+                            <div class="col-md-12 col-sm-12 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>                               
+                                <button type="button" id="btnExportSummaryReport" class="btn btn-primary" style="float:right; margin-left: 10px;" disabled title="Xuất hóa đơn đang xử lý ra định dạng excel" onclick="UpdateAll(0)">Xuất File</button>                               
+                                <button type="button" id="btnExportForControl" class="btn btn-info" style="float:right;" disabled title="Đối soát" onclick="checkCNN(2)">Đối soát</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="BillHandlingContainer"></div>
+                    <input type="hidden" id="ListCustomerChoiced">
+                    <input type="hidden" id="id_sum" />
+                    <input type="hidden"id="check_status" />
+                    <input type="hidden" id="curentpage" />
+                </div>
+
+                <div id="BillTotal" class="tab-pane">
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var dataSum;
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('#Time_From').val('00:00:00');
+        $('#Time_To').val('23:59:59');
+        var d = new Date();
+        $('#TimeSum_To').val('@ViewBag.DateTime');
+        $('#BillHandlingContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background:  #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách hóa đơn đang xử lý chấm nợ [ Tổng số hóa đơn: <span id='total_bill' style='color: red;'>0</span> , Tổng tiền: <span id='total_amount' style='color: red;'>0</span> ]</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a id="div_edit" href="#" class="navbutton" style="display:none;" onclick="UpdateAll(\'' + 1 + '\')" title="Thay đổi lịch chấm nợ">' +
+                    '<img src="/images/icon_usermap.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer">Chấm nợ</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '150', '200', '250'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text:'', width: '3%', cellsrenderer: function(row){
+                        if(@posAccount.type == -1){
+                            return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                                ' onclick="Update(\'' + row + '\',\'' + 2 + '\' )" >' +
+                                '<img src="/images/icon_edit.png" title="Cập nhật bản ghi"/></a></div>';
+                        }
+                    }
+                },
+                {
+                    text: '', width: '3%', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                            ' onclick="Update(\'' + row + '\',\'' + 0 + '\' )" >' +
+                            '<img src="/images/icon_usermap.png" title="Cập nhật bản ghi"/></a></div>';
+                    }
+                },
+                {
+                    text: '', width: '3%', cellsrenderer: function (row) {
+                        if(@posAccount.type == -1){
+                            return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                            ' onclick="Update(\'' + row + '\',\'' + 1 + '\' )" >' +
+                            '<img src="/images/icon_del.png" title="Xóa bản ghi"/></a></div>';
+                        }
+                    }
+                },
+                { text: 'Mã GD', dataField:'col_8', align: 'center', width:'8%', cellsalign: 'left' },
+                { text: 'Ví TNV', dataField: 'col_1', width: '12%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày thu', dataField: 'col_2', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã khách hàng', dataField: 'col_3', align: 'center', width: '12%', cellsalign: 'left' },
+                { text: 'Kỳ', dataField: 'col_4', width: '6%', align: 'center', cellsalign: 'left' },
+                { text: 'GCS', dataField:'col_19',  width: '5%', align: 'center', cellsalign: 'left' },
+                { text: 'Số tiền', dataField: 'col_5', width: '8%', align: 'center', cellsalign: 'right' },
+                { text: 'Loại', dataField: 'col_6', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Trạng thái',dataField: 'col_11', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Lịch chấm', dataField: 'col_7', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã lỗi', dataField: 'col_16', width:'5%', align: 'center', cellsalign: 'left'},
+                { text: 'Lý do', dataField: 'col_13', width:'13%', align:'center', cellsalign:'left'}
+            ]
+        });
+        $('#btnSearch').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/SearchBillHandling',
+                type: 'post',
+                data: {
+                    pcCode: $("#PCCode option:selected").val(),
+                    account: $("#Account option:selected").val(),
+                    customer: $("#Customer").val(),
+                    type: $("#Type option:selected").val(),
+                    status: $("#Status option:selected").val(),
+                    fromdate: $("#Fromdate").val(),
+                    fromtime:$('#Time_From').val(),
+                    todate: $("#Todate").val(),
+                    totime:$('#Time_To').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        dataSum = data.Records;
+                        $('#id_sum').val(data.Message);
+                        $('#BillHandlingContainer').jqxGrid('clear');
+                        $("#BillHandlingContainer").jqxGrid('refresh');
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.amount);
+                        $('#btnExportSummaryReport').prop('disabled', false);
+                        $('#btnExportForControl').prop('disabled', false);
+
+                        if (!$("#Status option:selected").val()) {
+                            $('#check_status').val('');
+                            $('#div_edit').css('display', 'none');
+                            $('#BillHandlingContainer').jqxGrid({ selectionmode: 'none' });
+                        } else {
+                            $('#check_status').val($("#Status option:selected").val());
+                            $('#div_edit').css('display', 'initial');
+                            $('#BillHandlingContainer').jqxGrid({ selectionmode: 'checkbox' });
+                        }
+                        $("#BillHandlingContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(dataSum)) });
+                    } else {
+                        $('#curentpage').val('');
+                        $('#check_status').val('');
+                        $('#id_sum').val('');
+                        $('#BillHandlingContainer').jqxGrid('clear');
+                        $('#btnExportSummaryReport').prop('disabled', true);
+                        $('#btnExportForControl').prop('disabled', true);
+
+                        $('#div_edit').css('display', 'none');
+                        $('#total_bill').text('0');
+                        $('#total_amount').text('0');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $('#idBillTotal').click(function () {
+            $.ajax({
+                url: '/ePOS/CheckSession',
+                type: 'post',
+                success: function (data) {
+                    $.ajax({
+                        type: 'post',
+                        url: '/Manager/_TreeHandling',
+                        data: {
+                            //edong: id_check
+                        },
+                        success: function (data) {
+                            $('#BillTotal').html(data);
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                },
+                 error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+            });
+        });
+    });    
+    function Update(cellValue, index){
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if(index == 2){
+                    $.ajax({
+                        type: 'post',
+                        url: '/Manager/_EditBillHandling',
+                        data: {
+                            index: encodeURI(cellValue)
+                        },
+                        success: function (data) {
+                            $('#dynamic-modal').html(data);
+                            $("#dynamic-modal").modal('show');
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                } else if(index ==1){
+                    document.getElementById('msg_yesno').innerHTML = 'Bạn có muốn xóa bản ghi đã chọn không?';
+                    $("#yesno").data('index', 3);
+                    $('#yesno').data('cellValue',cellValue);
+                    //$('#yesno').data('page', $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum);
+                    $('#yesno').modal('show');
+                }else{
+                    var status = $("#BillHandlingContainer").jqxGrid('getrowdata', cellValue).col_12;
+                    if(status == '4'){
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn thay đổi trạng thái hóa đơn không?';
+                        $("#yesno").data('index', 4);
+                        //$('#yesno').data('cellValue', encodeURI($("#BillHandlingContainer").jqxGrid('getrowdata', cellValue).col_8));
+                        $('#yesno').data('cellValue', encodeURI(cellValue));
+                        $('#yesno').data('page', $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum);
+                        $('#yesno').modal('show');
+                    }else{
+                        $.ajax({
+                            type: 'post',
+                            url: '/Manager/_UpdateTimeBillHanding',
+                            data: {
+                                id: encodeURI(cellValue)                             
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function UpdateAll(index){
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }else{
+                    if(index == 0){
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Manager/ExportBillHandling?id=' + encodeURI($('#id_sum').val());
+                        }
+                    }else if(index == 1){
+                        if ($('#check_status').val() == '4') {
+                            document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn thay đổi trạng thái các hóa đơn đã chọn không?';
+                            $("#yesno").data('index', 5);
+                            //$('#yesno').data('cellValue', $('#ListCustomerChoiced').val());
+                            $('#yesno').data('page', $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum);
+                            $('#yesno').modal('show');
+                        } else {                           
+                            $.ajax({
+                                type: 'post',
+                                url: '/Manager/_UpdateTimeAllBillHandling',
+                                data: {
+                                    id: $('#BillHandlingContainer').jqxGrid('getselectedrowindexes').toString(),
+                                    pagenum: $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagenum,
+                                    pagesize: $('#BillHandlingContainer').jqxGrid('getpaginginformation').pagesize                                    
+                                },
+                                success: function (data) {
+                                    $('#dynamic-modal').html(data);
+                                    $("#dynamic-modal").modal('show');
+                                },
+                                error: function (ErrorThrown) {
+                                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                    $('#error').modal('show');
+                                }
+                            });
+                        }
+                    }else if(index == 2){
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Manager/ExportReconciliation?id=' + encodeURI($('#id_sum').val()) + '&pc=' + $('#pc').val();
+                        }
+                    }else{
+                        if ($('#id_total').val()) {
+                            window.location.href = '/Manager/ExportTotal?id=' + encodeURI($('#id_total').val()) +
+                               '&total='+ $('#id_total_bill_sum').val() +'&amount=' + $('#id_total_amount_sum').val() +
+                               '&fromdate=' + $('#id_fromdate').val() + '&todate=' + $('#id_todate').val();
+                        }
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }   
+
+    function sourceSum(data) {
+        var source =
+            {
+                id: 'col_1',
+                localData: data,
+            };
+        return source;
+    }
+</script>

@@ -1,0 +1,887 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@model ePOS3.Models.SetParamModel
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#OnOffCredit" data-toggle="tab">Bật/tắt chấm nợ</a></li>
+                <li class="nav-item "><a href="#JobCredit" data-toggle="tab">Tiến trình</a></li>
+                <li class="nav-item "><a href="#Parameter" data-toggle="tab">Tham số hệ thống</a></li>
+                <li class="nav-item "><a href="#API" data-toggle="tab">Thêm mới SERVICE</a></li>
+                <li class="nav-item "><a href="#Role" data-toggle="tab">Quản lý Role</a></li>                
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="OnOffCredit">
+                   <br />
+                    <form class="form-horizontal form-label-left input_mask">    
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback" >
+                            <div class="col-md-1 col-sm-1 col-xs-12"> 
+                                <div id="EVN_HN" style="margin-top:5px;"></div>
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Hà Nội</label>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">   
+                                <input type="text" id="Date_EVNHN" class="form-control" disabled/> 
+                            </div>                           
+                        </div>    
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-1 col-sm-1 col-xs-12" >
+                                <div id="EVN_HCM" style="margin-top:5px;"></div>                                
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Hồ Chí Minh</label>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="Date_EVNHCM" class="form-control" disabled />                                 
+                            </div>                           
+                        </div>  
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback"  >
+                            <div class="col-md-1 col-sm-1 col-xs-12" >
+                                <div id="EVN_SPC" style="margin-top:5px;"></div>                                     
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">SPC</label>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="Date_EVNSPC" class="form-control" disabled />  
+                            </div>                            
+                        </div>  
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <div class="col-md-1 col-sm-1 col-xs-12" >
+                                 <div id="EVN_NPC" style="margin-top:5px;"></div>   
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">NPC</label>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="Date_EVNNPC" class="form-control" disabled />  
+                            </div>                            
+                        </div>  
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback"  >
+                            <div class="col-md-1 col-sm-1 col-xs-12" >
+                                <div id="EVN_CPC" style="margin-top:5px;"></div>   
+                                
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">CPC</label>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="Date_EVNCPC" class="form-control" disabled />                                  
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback" >
+                            <div class="col-md-1 col-sm-1 col-xs-12" >
+                                <div id="EVN_HP" style="margin-top:5px;"></div>                                   
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Hải Phòng</label>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="Date_EVNHP" class="form-control" disabled />  
+                            </div>
+                        </div>  
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback" >
+                            <div class="col-md-1 col-sm-1 col-xs-12" >
+                                <div id="EVN_KH" style="margin-top:5px;"></div>                                 
+                            </div>
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Khánh Hòa</label>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Ngày:</label>
+                            <div class="col-md-3 col-sm-3 col-xs-12">
+                                <input type="text" id="Date_EVNKH" class="form-control" disabled />                                 
+                            </div>                           
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane " id="JobCredit">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="JobCode" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tên:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="JobName" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mô tả:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="JobDesc" class="form-control" maxlength="1000">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Đối tượng thực thi:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="JobSubjects" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ngày chạy:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="JobDay" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.status_job, Model.StatusList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12 col-sm-12 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchJob" class="btn btn-success">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="JobContainer"></div>
+                </div>
+                <div class="tab-pane " id="Parameter">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Nhóm TS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="GroupParam" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="CodeParam" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mô tả:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="DesParam" class="form-control" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.status_param, Model.StatusList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                            <button type="button" id="btnSearchParameter" class="btn btn-success">Tìm kiếm</button>                            
+                        </div>
+                    </form>
+                    <div id="ParameterContainer"></div>
+                </div>
+                <div class="tab-pane " id="API">
+                    <br />
+                    <form  class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tên SERVICE:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <textarea id="NameAPI" class="form-control" rows="3" maxlength="300" ></textarea>
+                                
+                            </div>
+                        </div>
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mô tả:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">                                
+                                <textarea id="DescAPI" class="form-control" rows="3" maxlength="100"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                            <button type="button" id="btnAddAgent_API" class="btn btn-info">Thêm mới</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane " id="Role">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-12 col-sm-12 col-xs-12">Danh sách Agent</label>
+                            <div id="AgentContaier"></div>
+                        </div>
+                        <div class="col-md-8 col-sm-8 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-12 col-sm-12 col-xs-12">Danh sách API</label>
+                            <div id="APIContaier"></div>
+                        </div>
+                    </form>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var dataOnOff = null;
+    var dataJob = null;
+    var dataRole = null;
+    
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        // bật tắt chấm nợ
+        getOnOffCredit();
+        $('#EVN_HN').on('change', function (event) {
+            EditOnOffCredit('EVN-HN', $('#EVN_HN').val());
+        });
+        $('#EVN_HCM').on('change', function (event) {
+            EditOnOffCredit('EVN-HCM', $('#EVN_HCM').val());
+        });
+        $('#EVN_SPC').on('change', function (event) {
+            EditOnOffCredit('EVN-SPC', $('#EVN_SPC').val());
+        });
+        $('#EVN_NPC').on('change', function (event) {
+            EditOnOffCredit('EVN-NPC', $('#EVN_NPC').val());
+        });
+        $('#EVN_CPC').on('change', function (event) {
+            EditOnOffCredit('EVN-CPC', $('#EVN_CPC').val());
+        });
+        $('#EVN_HP').on('change', function (event) {
+            EditOnOffCredit('EVN-HP', $('#EVN_HP').val());
+        });
+        $('#EVN_KH').on('change', function (event) {
+            EditOnOffCredit('EVN-KH', $('#EVN_KH').val());
+        });
+
+        //tiên trinh
+        $('#JobContainer').jqxGrid({
+            width: '100%',
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách tiến trình</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px; "><a href="#" class="navbutton" onclick="checkCNN(\'' + 1 + '\',\'' + 1 + '\')" title="Thêm mới tiến trình">' +
+                     '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            autoheight: true,
+            pagesize: 500,
+            pagesizeoptions: ['500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            rowsheight: 40,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', align: 'center', cellsalign: 'left' },
+                {
+                    text: 'Trạng thái', dataField: 'col_14', width: '7%', createwidget: function (row, column, value, cellElement) {
+                        var buttonDiv = $("<div id='switch_" + row.boundindex + "' style='text-align: center; margin-top: 6px;'" +
+                            " onclick='change_checkbox(" + value + "," + row.boundindex + "," + 1 + " )'></div>");
+                        $(cellElement).append(buttonDiv);
+                        if (value == "1") {
+                            buttonDiv.jqxSwitchButton({
+                                height: 27,
+                                width: 75,
+                                checked: true
+                            });
+                        }
+                        else {
+                            buttonDiv.jqxSwitchButton({
+                                height: 27,
+                                width: 75,
+                                checked: false
+                            });
+                        }
+                    },
+                    initwidget: function (row, column, value, cellElement) { }
+                },
+                { text: 'Mã', dataField: 'col_2', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên', dataField: 'col_3', width: '20%', cellsalign: 'left', align: 'center' },
+                { text: 'Mô tả', dataField: 'col_4', width: '34%', cellsalign: 'left', align: 'center' },
+                { text: 'Ngày chạy', dataField: 'col_5', width: '12%', cellsalign: 'left', align: 'center' },
+                {
+                    text: ' ', width: '3%', align: 'center', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 0 + '\')" >' +
+                            '<img src="/images/icon_edit.png" title="Cập nhật"/></a></div>';
+                    }
+                },
+            ],
+        });
+        $('#btnSearchJob').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchJobCredit',
+                type: 'post',
+                data: {
+                    code: $('#JobCode').val(),
+                    name: $('#JobName').val(),
+                    desc: $('#JobDesc').val(),
+                    Subjects: $('#JobSubjects').val(),
+                    day: $('#JobDay').val(),
+                    status: $('#status_job option:selected').val(),
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        dataJob = data.Records;
+                        $("#JobContainer").jqxGrid('refresh');
+                        $("#JobContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataJob)) });
+                    } else {
+                        dataJob = null;
+                        $('#JobContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        if (data.index == 1) {
+                            $("#error").data('myControl', 'JobDay');
+                        }
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        // quan ly tham sô
+        $('#ParameterContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách tham số</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" onclick="checkCNN(\'' + 1 + '\',\'' + 2 + '\')" title="Thêm mới tham số">' +
+                     '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', align: 'center', cellsalign: 'left' },
+                { text: 'Nhóm tham số', dataField: 'col_2', width: '11%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã', dataField: 'col_3', width: '20%', cellsalign: 'left', align: 'center' },
+                { text: 'Giá trị', dataField: 'col_4', width: '17%', cellsalign: 'left', align: 'center' },
+                //{ text: 'Giá trị mở rộng', dataField: 'col_6', width: '12%', cellsalign: 'left', align: 'center' },
+                { text: 'Mô tả', dataField: 'col_5', width: '35%', cellsalign: 'left', align: 'center' },
+                { text: 'Trạng thái', dataField: 'col_7', width: '10%', align: 'center', cellsalign: 'left' },
+                {
+                    text: ' ', width: '3%', align: 'center', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 3 + '\')" >' +
+                            '<img src="/images/icon_edit.png" title="Cập nhật"/></a></div>';
+                    }
+                },
+            ],
+        });
+        $('#btnSearchParameter').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchParam',
+                type: 'post',
+                data: {
+                    group: $('#GroupParam').val(),
+                    code: $('#CodeParam').val(),
+                    desc: $('#DesParam').val(),
+                    status: $('#status_param option:selected').val(),
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        dataParam = data.Records;
+                        $("#ParameterContainer").jqxGrid('refresh');
+                        $("#ParameterContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataParam)) });
+
+                    } else {
+                        dataParam = null;
+                        $('#ParameterContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        // them moi API
+        $('#btnAddAgent_API').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/AddAgent_API',
+                type: 'post',
+                data: {
+                    name: $('#NameAPI').val(),
+                    desc: $('#DescAPI').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            })
+        });
+
+        // role
+        $('#AgentContaier').jqxTree({
+            width: '100%',
+            height: "500px"
+        });
+        $('#APIContaier').jqxGrid({
+            width: '100%',
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            autoheight: true,
+            pagesize: 500,
+            pagesizeoptions: ['500'],
+            pagerMode: 'advanced',
+            showToolbar: false,
+            altrows: true,
+            rowsheight: 35,
+            columns: [
+                 {
+                     text: 'STT', dataField: 'col_1', width: '10%', align: 'center', cellsalign: 'left'
+                 },
+                {
+                    text: 'Trạng thái', dataField: 'col_5', width: '13%', createwidget: function (row, column, value, cellElement) {
+                        var buttonDiv = $("<div id='api_" + row.boundindex + "' style='text-align: center; margin-top: 6px;'" +
+                            " onclick='api_checkbox(" + value + "," + row.boundindex + ")'></div>");
+                        $(cellElement).append(buttonDiv);
+                        if (value == "1") {
+                            buttonDiv.jqxSwitchButton({
+                                height: 25,
+                                width: 75,
+                                checked: true
+                            });
+                        }
+                        else {
+                            buttonDiv.jqxSwitchButton({
+                                height: 25,
+                                width: 75,
+                                checked: false
+                            });
+                        }
+                    },
+                    initwidget: function (row, column, value, cellElement) { }
+                },
+                { text: 'Mã API', dataField: 'col_6', width: '27%', cellsalign: 'left', align: 'center' },
+                { text: 'Tên API', dataField: 'col_4', width: '50%', cellsalign: 'left', align: 'center' },
+            ],
+        });
+        bindTreeAgent();
+
+        $('#AgentContaier').on('select', function (event) { 
+            $.ajax({
+                url: '/Help/getAPIByAgent',
+                type: 'post',
+                data: {
+                    agent: $('#AgentContaier').jqxTree('getItem', event.args.element).id                   
+                },
+                success: function (data) {
+                    //$('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        dataRole = data.Records;
+                        $("#APIContaier").jqxGrid('refresh');
+                        $("#APIContaier").jqxGrid({ source: new $.jqx.dataAdapter(source(dataRole)) });
+                    }
+                    else {
+                        dataRole = null;
+                        $('#APIContaier').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    //$('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });           
+        });
+    });   
+
+    function change_checkbox(value, cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) {
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn lưu thông tin thay đổi?';
+                        $('#yesno').data('row', cellValue);
+                        $('#yesno').data('value', value);
+                        $("#yesno").data('index', 13);
+                    } else {
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có chắc chắn lưu thông tin thay đổi?';
+                        $('#yesno').data('row', cellValue);
+                        $('#yesno').data('value', value);
+                        $("#yesno").data('index', 14);
+                    }
+                    $('#yesno').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    
+    function api_checkbox(value, cellvalue) {
+        $("body").addClass("loading");
+        $.ajax({
+            url: '/Help/doChangeAPIforAgent',
+            type: 'post',
+            data: {
+                index: cellvalue,
+                datasource: JSON.stringify(dataRole),
+                status: $('#api_' + cellvalue).val()
+            },
+            success: function (data) {
+                $("body").removeClass("loading");
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                else if (data.Result == 'SUCCESS') {
+                    dataRole = data.Records
+                    $("#APIContaier").jqxGrid('refresh');
+                    $("#APIContaier").jqxGrid({ source: new $.jqx.dataAdapter(source(dataRole)) });
+                    $("#APIContaier").jqxGrid('selectrow', cellvalue);
+                } else {
+                    //document.getElementById('msg-Status').style.font = "italic bold 20px time new roman,serif";
+                    //document.getElementById('msg-Status').innerHTML = data.Message;
+                    //$("#dialog-Status").data('row', data.index);
+                    //$("#dialog-Status").data('index', 0);
+                    //$("#dialog-Status").dialog('open');
+                }
+            },
+            error: function () {
+                $("body").removeClass("loading");
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+
+    function bindTreeAgent() {
+        //$('.loading').show();
+        $.ajax({
+            url: '/Help/getAgent',
+            type: 'post',
+            success: function (data) {
+                //$('.loading').hide();
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.Result == 'SUCCESS') {
+                    var dataAdapter = new $.jqx.dataAdapter(sourceTree(data.Records));
+                    dataAdapter.dataBind();
+                    var records = dataAdapter.getRecordsHierarchy('id', 'parentid', 'items', [{ name: 'text', map: 'label' }]);
+                    $('#AgentContaier').jqxTree({ source: records });
+                    $('#AgentContaier').jqxTree('expandAll');
+                    $('#AgentContaier').jqxTree('selectItem', $("#AgentContaier").find('li:first')[0]);
+                } else {
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                //$('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+
+    function sourceTree(data) {
+        var source =
+        {
+            datafields: [
+               { name: 'id' },
+               { name: 'parentid' },
+               { name: 'text' },
+               { name: 'value' }
+            ],
+            id: 'id',
+            localData: data,
+        };
+        return source;
+    }
+
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 1) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_AddJob',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 0) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_EditJob',
+                            data: {
+                                id: JSON.stringify($("#JobContainer").jqxGrid('getrowdata', cellValue)),
+                                index: cellValue
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 2) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_AddParam',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 3) {
+                        $.ajax({
+                            type: 'post',
+                            url: '/Help/_EditParam',
+                            data: {
+                                id: encodeURI(JSON.stringify($("#ParameterContainer").jqxGrid('getrowdata', cellValue))),
+                                index: cellValue
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    }                 }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function source(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+
+    function EditOnOffCredit(evn, value) {
+        if (!value) {
+            $.ajax({
+                type: 'get',
+                url: '/Help/_EditOffCredit',
+                data: {
+                    evn: evn,
+                    value: value
+                },
+                success: function (data) {
+                    $('#dynamic-modal').html(data);
+                    $("#dynamic-modal").modal('show');
+                },
+                error: function (ErrorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        } else {
+            $.ajax({
+                type: 'get',
+                url: '/Help/_EditOnCredit',
+                data: {
+                    evn: evn,
+                    value: value
+                },
+                success: function (data) {
+                    $('#dynamic-modal').html(data);
+                    $("#dynamic-modal").modal('show');
+                },
+                error: function (ErrorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        }
+    }
+
+    function getOnOffCredit() {
+        $('.loading').show();
+        $.ajax({
+            url: '/Help/getParam',
+            type: 'post',
+            data: {
+                code: '@Constant.ONOFF_CREDIT'
+            },
+            success: function (data) {
+                $('.loading').hide();
+                if(data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                else if (data.Result == 'SUCCESS') {
+                    dataOnOff = data.Records;
+                    paint(dataOnOff)
+                } else {
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function paint(data) {
+        $.each(data, function (index, optionData) {
+            var date = new Date(optionData.col_3);
+            switch (optionData.col_1) {
+                case 'EVN-HN':
+                    if (optionData.col_2 == 0) {
+                        $('#EVN_HN').jqxSwitchButton({ height: 23, width: 60, checked: false });
+                    }
+                    else {
+                        $('#EVN_HN').jqxSwitchButton({ height: 23, width: 60, checked: true });
+                    }
+                    $('#Date_EVNHN').val(optionData.col_3);
+                    break;
+                case 'EVN-HCM':
+                    if (optionData.col_2 == 0) {
+                        $('#EVN_HCM').jqxSwitchButton({ height: 23, width: 60, checked: false });
+                    }
+                    else {
+                        $('#EVN_HCM').jqxSwitchButton({ height: 23, width: 60, checked: true });
+                    }
+                    $('#Date_EVNHCM').val(optionData.col_3);
+                    break;
+                case 'EVN-NPC':
+                    if (optionData.col_2 == 0) {
+                        $('#EVN_NPC').jqxSwitchButton({ height: 23, width: 60, checked: false });
+                    }
+                    else {
+                        $('#EVN_NPC').jqxSwitchButton({ height: 23, width: 60, checked: true });
+                    }
+                    $('#Date_EVNNPC').val(optionData.col_3);
+                    break;
+                case 'EVN-SPC':
+                    if (optionData.col_2 == 0) {
+                        $('#EVN_SPC').jqxSwitchButton({ height: 23, width: 60, checked: false });
+                    }
+                    else {
+                        $('#EVN_SPC').jqxSwitchButton({ height: 23, width: 60, checked: true });
+                    }
+                    $('#Date_EVNSPC').val(optionData.col_3);
+                    break;
+                case 'EVN-HP':
+                    if (optionData.col_2 == 0) {
+                        $('#EVN_HP').jqxSwitchButton({ height: 23, width: 60, checked: false });
+                    }
+                    else {
+                        $('#EVN_HP').jqxSwitchButton({ height: 23, width: 60, checked: true });
+                    }
+                    $('#Date_EVNHP').val(optionData.col_3);
+                    break;
+                case 'EVN-CPC':
+                    if (optionData.col_2 == 0) {
+                        $('#EVN_CPC').jqxSwitchButton({ height: 23, width: 60, checked: false });
+                    }
+                    else {
+                        $('#EVN_CPC').jqxSwitchButton({ height: 23, width: 60, checked: true });
+                    }
+                    $('#Date_EVNCPC').val(optionData.col_3);
+                    break;
+                case 'EVN-KH':
+                    if (optionData.col_2 == 0) {
+                        $('#EVN_KH').jqxSwitchButton({ height: 23, width: 60, checked: false });
+                    }
+                    else {
+                        $('#EVN_KH').jqxSwitchButton({ height: 23, width: 60, checked: true });
+                    }
+                    $('#Date_EVNKH').val(optionData.col_3);
+                    break;
+            }
+        });
+    }
+</script>

@@ -1,0 +1,631 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.BoockCMISModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#AddBookCMIS" data-toggle="tab">Thiết lập tải sổ GCS</a></li>
+                <li class="nav-item"><a href="#ListReceipts" data-toggle="tab">Danh sách hóa đơn giao thu</a></li>
+                <li class="nav-item"><a href="#AddFileBookCMIS" data-toggle="tab">Thiết lập tải sổ GCS theo File</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="AddBookCMIS">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm- col-xs-12">Tổng công ty:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Corporation, Model.CorporationList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ngày GCS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Day, Model.DayList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm- col-xs-12">Trạng thái :</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Status, Model.StatusCMISList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-sm-8 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-2 col-sm-2 col-xs-12">Sổ GCS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <textarea class="form-control" id="BookCMIS" rows="3"></textarea>       
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>
+
+                            </div>
+                        </div>
+                        @*<div class="form-group">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>
+
+                            </div>
+                        </div>*@
+                    </form>
+                    <div id="BookCMISContainer"></div>
+                    <input type="hidden" id="id_BookCMIS" />
+                </div>
+
+                <div id="ListReceipts" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm- col-xs-12">Tổng công ty:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Corporation_History, Model.CorporationList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PCCode_History, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Sổ GCS:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <textarea class="form-control" id="BookCMIS_History" rows="3"></textarea>       
+                            </div>
+                        </div>                        
+                        <div class="form-group">
+                            <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                                <button type="button" id="btnSearch_History" class="btn btn-success">Tìm kiếm</button>
+
+                            </div>
+                        </div>
+                    </form>
+                    <div id="HistoryContainer"></div>
+                    
+                </div>
+                <div id="AddFileBookCMIS" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">File:  </label>
+                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                <input type="file" id="uploadFile" accept=".xml" class="form-control" onchange="validate(this.value);">
+                            </div>
+                            <div class="col-md-5 col-sm-5 col-xs-12">
+                                <button type="button" id="btnRead" class="btn btn-danger" disabled>Đọc file</button>
+                                <button type="button" id="btnGetFile" class="btn btn-dark">Lấy File mẫu</button>
+                                <input type="hidden" id="file_key" />
+                            </div>
+
+                        </div>
+                    </form>
+                    <div id="FileContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var datasoureBookCMIS = null;
+    var dataHistory = null;
+    var validExtensions = ['xls', 'xlsx'];
+    $(document).ready(function () {
+        $('#Corporation').change(function () {
+            $.ajax({
+                url: '/ePOS/getPCbyEVN',
+                type: 'post',
+                data: {
+                    id: $("#Corporation option:selected").val(),
+                    index: '2',
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    $('#PCCode').empty();
+                    $.each(data.Data, function (index, optionData) {
+                        $("#PCCode").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                    });
+                    $("#PCCode").trigger('chosen:updated');
+                    $("#PCCode").change();
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        });
+        $('#BookCMISContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách lịch tải sổ GCS</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" onclick="checkCNN(\'' + 1 + '\',\'' + 1 + '\')" title="Thêm mới lịch tải sổ GCS">' +
+                    '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', align: 'center', cellsalign: 'center' },
+                { text: 'Sổ GCS', dataField: 'col_2', width: '7%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày tạo', dataField: 'col_3', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày GCS', dataField: 'col_4', width: '7%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày PH', dataField: 'col_14', width: '6%', align: 'center', cellsalign: 'left' },
+                { text: 'Email', dataField: 'col_5', width: '28%', align: 'center', cellsalign: 'left' },
+                { text: 'Trạng thái', dataField: 'col_6', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Số KH', dataField: 'col_13', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng HĐ', dataField: 'col_11', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'col_12', width: '10%', align: 'center', cellsalign: 'right' },
+                {
+                    text: ' ', width: '3%', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; padding-top: 10px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + 0 + '\',\'' + row + '\' )" >' +
+                            '<img src="/images/icon_edit.png" title="Cập nhật thông tin"/></a></div>';
+                    }
+                },
+                {
+                    text: '', width: '3%', cellsrenderer: function (row) {
+                        return '<div style="text-align: center;padding-top: 5px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + 2 + '\',\'' + row + '\' )" >' +
+                            '<img src="/images/icon_download.png" title="Kiểm trả tải hóa đơn"/></a></div>';
+                    }
+                }
+            ]
+        });
+        $('#btnSearch').click(function () {
+            $('.loading').show();
+            var paginginformation = $('#BookCMISContainer').jqxGrid('getpaginginformation');
+            $.ajax({
+                url: '/Manager/SearchDowloadBookCMIS',
+                type: 'post',
+                data: {
+                    pcCode: $("#PCCode option:selected").val(),
+                    day: $("#Day option:selected").val(),
+                    status: $("#Status option:selected").val(),
+                    bookCMIS: $('#BookCMIS').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                   
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == 'SUCCESS') {
+                        datasoureBookCMIS = data.Records;
+                        $('#id_BookCMIS').val(data.id);
+                        $("#BookCMISContainer").jqxGrid('refresh');
+                        $("#BookCMISContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceBookCMIS(datasoureBookCMIS)) });
+                    } else {
+                        $('#id_BookCMIS').val('');
+                        datasoureBookCMIS = null;
+                        $('#BookCMISContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    alert(ErrorThrown);
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#Corporation_History').change(function () {
+            $.ajax({
+                url: '/ePOS/getPCbyEVN',
+                type: 'post',
+                data: {
+                    id: $("#Corporation_History option:selected").val(),
+                    index: '2',
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    $('#PCCode_History').empty();
+                    $.each(data.Data, function (index, optionData) {
+                        $("#PCCode_History").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                    });
+                    $("#PCCode_History").trigger('chosen:updated');
+                    $("#PCCode_History").change();
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        });
+        $('#HistoryContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Lịch tải tải sổ GCS</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '5%', align: 'center', cellsalign: 'right' },
+                {
+                    text: '', width: '5%', dataField: 'col_12', cellsrenderer: function (row, columnfield, value) {
+                        if (value == '1')
+                            return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                 ' onclick="Detail(\'' + row + '\',\'' + 1 + '\')" >' +
+                                '<img src="/images/icon_inbox.png" title="Lấy hóa đơn còn nợ từ EVN"/></a></div>';
+                        else
+                            return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                                ' onclick="Detail(\'' + row + '\',\'' + 2 + '\')" >' +
+                                '<img src="/images/refresh.png" title="Cập nhật lại thời gian giao thu"/></a></div>';
+                    }
+                },
+                { text: 'Công ty điện lực', dataField: 'col_2', width: '17%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã điện lực', dataField: 'col_3', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Sổ GCS', dataField: 'col_4', width: '10%', align: 'center', cellsalign: 'left' },
+                {
+                    text: 'Trạng thái', dataField: 'col_5', width: '10%', align: 'center', cellsalign: 'right', cellsrenderer: function (row, columnfield, value) {
+                        if (value == '1')
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Hợp lệ</div>';
+                        else
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Không hợp lệ</div>';
+                    }
+                },
+                { text: 'HĐ Còn nợ', dataField: 'col_7', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Gần nhất', dataField: 'col_9', columngroup: 'DateTime', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Tiếp theo', dataField: 'col_10', columngroup: 'DateTime', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Thứ tự', dataField: 'col_11', width: '5%', align: 'center', cellsalign: 'right' }
+            ],
+            columngroups: [
+                { text: 'Thời gian giao thu', align: 'center', name: 'DateTime' },
+            ]
+        });
+        $('#btnSearch_History').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/SearchAssignBillLog',
+                type: 'post',
+                data: {
+                    pccode: $("#PCCode_History option:selected").text(),
+                    bookCMIS: $('#BookCMIS_History').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        dataHistory = data.Records;
+                        $("#HistoryContainer").jqxGrid('refresh');
+                        $("#HistoryContainer").jqxGrid({
+                            source: new $.jqx.dataAdapter(sourceHistory(dataHistory))
+                        });
+                    } else {
+                        dataHistory = null;
+                        $('#HistoryContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#btnGetFile').click(function () {
+            window.location.href = '/Import/Download?filename=' + encodeURI('File_tai_GCS.xlsx');
+        });
+        $('#FileContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            //renderToolbar: function (toolbar) {
+            //    var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'></div>");
+            //    toolbar.append(container);
+            //},
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: false,            
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '4%', align: 'center', cellsalign: 'left' },
+                {
+                    text: 'Mã điện lực', dataField: 'col_2', width: '8%', align: 'center', cellsalign: 'left'},
+                { text: 'Sổ GCS', dataField: 'col_3', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày GCS', dataField: 'col_4', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Ngày PH', dataField: 'col_5', width: '10%', align: 'center', cellsalign: 'left' },
+                {
+                    text: 'Trạng thái', dataField: 'col_6', width: '15%', align: 'center', cellsalign: 'left',
+                    cellsrenderer: function (row, columnfield, value) {
+                        if (value == '1') {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Kích hoạt</div>';
+                        } else if (value == '0') {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Chưa kích hoạt</div>';
+                        } else {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;"></div>';
+                        }
+                    }
+                },
+                { text: 'Email', dataField: 'col_7', width: '25%', align: 'center', cellsalign: 'left' },
+                { text: 'Kết quả', dataField: 'col_8', width: '19%', align: 'center', cellsalign: 'left' }
+            ]
+        });
+        $('#btnRead').click(function () {
+            $("#uploadFile").val('');
+            $('#btnRead').prop('disabled', true);
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/InsertDataExcel',
+                type: 'post',
+                data: {
+                    id: encodeURI($('#file_key').val()),
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        $("#FileContainer").jqxGrid('refresh');
+                        $("#FileContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceFile(data.Records)) });
+                    } else {
+                        $('#FileContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function sourceFile(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function sourceHistory(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function Detail(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    $('.loading').show();
+                    $.ajax({
+                        url: '/Manager/UpdateAssignBillLog',
+                        type: 'post',
+                        data: {
+                            pcCode: $("#HistoryContainer").jqxGrid('getrowdata', cellValue).col_3,
+                            bookCMIS: $("#HistoryContainer").jqxGrid('getrowdata', cellValue).col_4,
+                            status: index,
+                            index: cellValue,
+                            datasource: JSON.stringify(dataHistory),
+                        },
+                        success: function (data) {
+                            $('.loading').hide();
+                            if (data.isRedirect)
+                                window.location.href = data.redirectUrl;
+                            if (data.Result == "SUCCESS") {
+                                dataHistory = data.Records;
+                                $("#HistoryContainer").jqxGrid('refresh');
+                                $("#HistoryContainer").jqxGrid({
+                                    source: new $.jqx.dataAdapter(sourceHistory(dataHistory))
+                                });
+                                $("#HistoryContainer").jqxGrid('selectrow', cellValue);
+                                document.getElementById('msg_info').innerHTML = data.Message;
+                                $('#info').modal('show');
+                            } else {
+                                document.getElementById('msg_error').innerHTML = data.Message;
+                                $('#error').modal('show');
+                            }
+                        },
+                        error: function (ErrorThrown) {
+                            $('.loading').hide();
+                            window.location.href = '@Url.Action("Login", "ePOS")';
+                        }
+                    });
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function validate(file) {
+        var ext = file.split(".");
+        ext = ext[ext.length - 1].toLowerCase();
+        $('#FileContainer').jqxGrid('clear');
+        if (validExtensions.lastIndexOf(ext) == -1) {
+            $("#uploadFile").val("");
+            document.getElementById('msg_error').innerHTML = 'Định dạng file dữ liệu không đúng';
+            $('#error').modal('show');
+        }
+        else {
+            uploadFile();
+        }
+    }
+    function uploadFile() {
+        var dataFile = new FormData();
+        var files = $("#uploadFile").get(0).files;
+        if (files.length > 0) {
+            dataFile.append("MyFile", files[0]);
+        }
+        $('.loading').show();
+        $.ajax({
+            url: "/Manager/AddFileBookCMIS",
+            type: "post",
+            processData: false,
+            contentType: false,
+            data: dataFile,
+            success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                } else if ("SUCCESS") {
+                    $('#file_key').val(data.Message);
+                    $('#btnRead').prop('disabled', false);
+                } else {
+                    $('#btnRead').prop('disabled', true);
+                    $('#file_key').val('');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceBookCMIS(data) {
+        var source =
+        {
+            id: 'col_8',
+            localData: data,
+        };
+        return source;
+    }
+    function checkCNN(index, cellValue) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 0) {
+                        $.ajax({
+                            url: '/Manager/_EditBookCMIS',
+                            type: 'get',                            
+                            data: {
+                                id: $('#id_BookCMIS').val(),
+                                key: encodeURI($("#BookCMISContainer").jqxGrid('getrowdata', cellValue).col_1)
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 1) {
+                        $.ajax({
+                            url: '/Manager/_AddBookCMIS',
+                            type: 'get',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: '/Manager/GetAssignBookCMIS',
+                            type: 'post',
+                            data: {
+                                pcCode: encodeURI($("#BookCMISContainer").jqxGrid('getrowdata', cellValue).col_10),
+                                bookCMIS: encodeURI($("#BookCMISContainer").jqxGrid('getrowdata', cellValue).col_2),
+                            },
+                            success: function (data) {
+                                $("body").removeClass("loading");
+                                if (data.isRedirect)
+                                    window.location.href = data.redirectUrl;
+                                if (data.Result == 'SUCCESS') {
+                                    $("#BookCMISContainer").jqxGrid('selectrow', cellValue);                                   
+                                    document.getElementById('msg_info').innerHTML = data.Message;
+                                    $('#info').modal('show');
+                                } else {
+                                    document.getElementById('msg_error').innerHTML = data.Message;
+                                    $('#error').modal('show');
+                                }
+                            },
+                            error: function (ErrorThrown) {
+                                window.location.href = '@Url.Action("Login", "ePOS")';
+                            }
+                        });
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+
+</script>

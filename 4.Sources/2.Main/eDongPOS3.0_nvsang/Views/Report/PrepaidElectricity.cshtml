@@ -1,0 +1,362 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ReportEDongCashModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#EDongCash" data-toggle="tab">Tổng hợp</a></li>
+                <li class="nav-item"><a href="#EDongCashDetail" data-toggle="tab">Chi tiết</a></li>              
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="EDongCash">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">                        
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountChild, Model.AccAssignList, new { @multiple = "multiple" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Từ ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">đến ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-right ">
+                            <button type="button" id="btnSearchEDongCash" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportEDongCash" class="btn btn-primary" disabled title="Xuất báo cáo tổng hợp ra định dạng excel" onclick="checkCNN(1)">Xuất File</button>
+                            <input type="hidden" id="id_sum" />
+                        </div>
+
+                    </form>
+                    <div id="EDongCashContainer"></div>
+                </div>
+                <div id="EDongCashDetail" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">                       
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountChildDetail, Model.AccAssignList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Từ ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDateDetail" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">đến ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDateDetail" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-right ">
+                            <button type="button" id="btnSearchEDongCashDetail" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportEDongCashDetail" class="btn btn-primary" disabled title="Xuất báo cáo chi tiết ra định dạng excel" onclick="checkCNN(0)">Xuất File</button>
+                            <input type="hidden" id="id_detail" />
+                            <input type="hidden" id="account" />
+                        </div>
+
+                    </form>
+                    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback table_detail">
+                        <div style="font-size: 16px;padding: 5px 10px 5px 0; color: black; font-weight:bold; font-style:italic; float: left;">
+                            Tồn đầu kỳ:
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                           Số dư: <span id="amount_old">0</span>
+                        </div>                        
+                    </div>
+                    <div id="DetailContainer"></div>
+                    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback table_detail">
+                        <div style="font-size: 16px;padding: 5px 10px 5px 0; color: black; font-weight:bold; font-style:italic; float: left;">
+                            Tồn cuối kỳ:
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Số dư: <span id="amount_new">0</span>
+                        </div>                        
+                    </div>
+                </div>              
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+            });
+
+        $('#AccountChild').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+
+        $('#EDongCashContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: skyblue;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách ví</h4></div>");
+
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Số ví', dataField: 'col_1', width: '15%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Họ tên', dataField: 'col_2', width: '25%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Số dư đầu kỳ', dataField: 'col_3',  width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Số dư cuối kỳ', dataField: 'col_4',  width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền mua', dataField: 'col_5',  width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền đã tiêu', dataField: 'col_6', width: '15%', align: 'center', cellsalign: 'right' }
+            ]
+        });
+
+        $('#btnSearchEDongCash').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchPrepaidElectricity',
+                type: 'post',
+                data: {
+                    ListAcc: GetEdongCash(),
+                    FromDate: $("#FromDate").val(),
+                    ToDate: $("#ToDate").val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_sum').val(data.id);
+                        $("#EDongCashContainer").jqxGrid('refresh');
+                        $("#EDongCashContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(data.Records)) });
+                        $('#btnExportEDongCash').prop('disabled', false);
+                    } else {
+                        $('#id_sum').val('');
+                        $('#btnExportEDongCash').prop('disabled', false);
+                        $('#EDongCashContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $('#DetailContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách chi tiết ví</h4></div>");
+
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Ngày', dataField: 'col_1', width: '25%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Số dư trong ngày', dataField: 'col_2', width: '25%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền mua', dataField: 'col_3', width: '25%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền tiêu', dataField: 'col_4', width: '25%', align: 'center', cellsalign: 'right' }
+            ]
+        });
+        $('#btnSearchEDongCashDetail').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetailPrepaidElectricity',
+                type: 'post',
+                data: {
+                    edong: $('#AccountChildDetail option:selected').val(),
+                    name: $('#AccountChildDetail option:selected').text(),
+                    FromDate: $("#FromDateDetail").val(),
+                    ToDate: $("#ToDateDetail").val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detail').val(data.id);
+                        document.getElementById("amount_old").innerHTML = data.Records.Amount_old;
+                        document.getElementById("amount_new").innerHTML = data.Records.Amount_new;
+                        $('#account').val(data.account);
+                        $("#DetailContainer").jqxGrid('refresh');
+                        $("#DetailContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceDetail(data.Records.items)) });
+                        $('#btnExportEDongCashDetail').prop('disabled', false);
+                    } else {
+                        $('#id_detail').val('');
+                        $('#account').val('');
+                        $('#DetailContainer').jqxGrid('clear');
+                        document.getElementById("amount_old").innerHTML = "0";
+                        document.getElementById("amount_new").innerHTML = "0";
+                        $('#btnExportEDongCashDetail').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+
+    function checkCNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    if (index == 1) {
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Report/ExportPrepaidElectricity?id=' + encodeURI($('#id_sum').val());
+                        }
+                    } else {
+                        if ($('#id_detail').val()) {
+                            window.location.href = '/Report/ExportDetailPrepaidElectricity?id=' + encodeURI($('#id_detail').val()) + '&account=' + $('#account').val();
+                        }
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        })
+    }
+
+    function GetEdongCash() {
+        var obj = [];
+        var selected = $("#AccountChild option:selected");
+        var message = "";
+        selected.each(function () {
+            obj.push($(this).text());
+        });
+        if (obj.length > 0) {
+            return JSON.stringify(obj);
+        }
+        else
+            return null;
+    }
+    function sourceSum(data) {
+        var source =
+            {
+                id: 'col_1',
+                localData: data,
+            };
+        return source;
+    }
+    function sourceDetail(data) {
+        var source =
+            {
+                id: 'col_1',
+                localData: data,
+            };
+        return source;
+    }
+</script>

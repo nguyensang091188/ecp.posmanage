@@ -1,0 +1,569 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+<script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+</script>
+        return;
+    }
+}
+@model ePOS3.Models.ReportDebtListModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#SummaryReport" data-toggle="tab">Tổng hợp</a></li>
+                <li class="nav-item"><a href="#FileUpload" data-toggle="tab">Nhập File</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="SummaryReport">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 ">
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Tổng Cty:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    @Html.DropDownListFor(m => m.EVN, Model.EVNList, new { @class = "form-control chosen-select" })
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Từ ngày:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <fieldset>
+                                        <div class="control-group">
+                                            <div class="controls">
+                                                <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                    <input type="text" class="form-control has-feedback-left datefield" id="FromDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                    <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                    <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <input type="text" id="Customer_Code" class="form-control" maxlength="15">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 ">
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Điện lực:  </label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    @Html.DropDownListFor(m => m.PC, Model.PCList, new { @multiple = "multiple" })
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Đến ngày:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    <fieldset>
+                                        <div class="control-group">
+                                            <div class="controls">
+                                                <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                    <input type="text" class="form-control has-feedback-left datefield" id="ToDate" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                                                    <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                    <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái:</label>
+                                <div class="col-md-8 col-sm-8 col-xs-12">
+                                    @Html.DropDownListFor(m => m.Status, Model.StatusList, new { @class = "form-control chosen-select" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <input type="hidden" id="id_sum" />
+                            <input type="hidden" id="id_fromdate" />
+                            <input type="hidden" id="id_todate" />
+                            <input type="hidden" id="id_total_bill" />
+                            <input type="hidden" id="id_total_amount" />
+                            <button type="button" id="btnSearchReport" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportReport" class="btn btn-primary" disabled title="Xuất báo cáo ra định dạng excel" onclick="checkCNN(0)">Xuất File</button>
+                        </div>
+                    </form>
+                    <div id="SumContainer"></div>
+                </div>
+                <div class="tab-pane" id="FileUpload">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">                      
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">Điện lực:</label>
+                            <div class="col-md-2 col-sm-2 col-xs-12">
+                                <label class="radio-inline"><input type="radio" id="EVN_HN" name="EVN" checked="checked" value="0">Hà Nội</label>
+                                <label class="radio-inline"><input type="radio" id="EVN_SPC" name="EVN" value="1">SPC</label>
+                            </div>
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">File:  </label>
+                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                <input type="file" id="uploadFile" class="form-control" onchange="validate(this.value);">
+                            </div>
+                            <div class="col-md-1 col-sm-1 col-xs-12">
+                                <button type="button" id="btnRead" class="btn btn-danger" disabled>Đọc file</button>
+                                <input type="hidden" id="file_key" />
+                            </div>
+                        </div>
+                    </form>
+                    <div id="BillContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var validExtensions = ['xls', 'xlsx'];
+    $(document).ready(function () {      
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#EVN').change(function () {
+            $.ajax({
+                url: '/ePOS/getPCbyEVN',
+                type: 'post',
+                data: { id: $("#EVN option:selected").val(), index :"2"},
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "OK") {
+                        $('#PC').empty();
+                        $.each(data.Data, function (index, optionData) {
+                            $("#PC").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#PC").multiselect('rebuild');
+                    } else {
+                        $('#PC').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#PC').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            nonSelectedText: 'Chọn Điện lực',
+            nSelectedText:'điện lực đã chọn'
+        });
+        $('#SumContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách khách hàng nợ tiền điện " +
+                    "[ Tổng số hóa đơn: <span id='total_bill' style='color: red;'>0</span>, Tổng số tiền: <span id='total_amount' style='color: red;'>0</span> ] </h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            //pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'STT', dataField: 'col_1', width: '7%', align: 'center', cellsalign: 'center' },
+                { text: 'Điện lực', dataField: 'col_2', width: '20%', align: 'center', cellsalign: 'left'  },
+                { text: 'Mã khách hàng', dataField: 'col_3', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên khách hàng', dataField: 'col_4', width: '23%', align: 'center', cellsalign: 'left' },
+                { text: 'Số tiền điện SD', dataField: 'col_5', width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Tình trạng', dataField: 'col_6', width: '20%', cellsalign: 'left', align: 'center' },
+            ]
+        });
+        $('#btnSearchReport').click(function () {
+            var paginginformation = $('#SumContainer').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Accountant/SearchDebtForBank',
+                type: 'post',
+                data: {
+                    pcCode: getPcSelected(),
+                    customer: $('#Customer_Code').val(),
+                    fromdate: $('#FromDate').val(),
+                    todate: $('#ToDate').val(),
+                    status:$('#Status option:selected').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_sum').val(data.id);
+                        $('#id_fromdate').val(data.fromdate);
+                        $('#id_todate').val(data.todate);
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.totalAmount);
+                        $('#id_total_bill').val(data.total_bill),
+                        $('#id_total_amount').val(data.totalAmount),
+                        $("#SumContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceSum(data));
+                        $("#SumContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $('#btnExportReport').prop('disabled', false);
+                    } else {
+                        $('#total_bill').text(0);
+                        $('#total_amount').text(0);
+                        $('#id_sum').val('');
+                        $('#id_fromdate').val('');
+                        $('#id_todate').val('');
+                        $('#id_total_bill').val(0),
+                        $('#id_total_amount').val(0),
+                        $('#btnExportReport').prop('disabled', true);
+                        $('#SumContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        //$("#SumContainer").bind("pagechanged", function (event) {
+        //    $('.loading').show();
+        //    $.ajax({
+        //        url: '/Accountant/SumContainer_PageChange',
+        //        type: 'post',
+        //        data: {
+        //            id: $('#id_sum').val(),                   
+        //            pagenum: event.args.pagenum,
+        //            pagesize: event.args.pagesize
+        //        },
+        //        success: function (data) {
+        //            $('.loading').hide();
+        //            if (data.isRedirect)
+        //                window.location.href = data.redirectUrl;
+        //            if (data.Result == "SUCCESS") {                        
+        //                $("#SumContainer").jqxGrid('refresh');
+        //                var dataadapter2 = new $.jqx.dataAdapter(sourceSum(data));
+        //                $("#SumContainer").jqxGrid({
+        //                    source: dataadapter2,
+        //                    virtualmode: true,
+        //                    rendergridrows: function () {
+        //                        return dataadapter2.records;
+        //                    },
+        //                });
+        //                $('#btnExportReport').prop('disabled', false);
+        //            } else {
+        //                $('#total_bill').text(0);
+        //                $('#total_amount').text(0);
+        //                $('#id_sum').val('');
+        //                $('#id_fromdate').val('');
+        //                $('#id_todate').val('');
+        //                $('#id_total_bill').val(0),
+        //                $('#id_total_amount').val(0),
+        //                $('#btnExportReport').prop('disabled', true);
+        //                $('#SumContainer').jqxGrid('clear');
+        //                document.getElementById('msg_error').innerHTML = data.Message;
+        //                $('#error').modal('show');
+        //            }
+        //        },
+        //        error: function () {
+        //            $('.loading').hide();
+        //            window.location.href = '@Url.Action("Login", "ePOS")';
+        //        }
+        //    });
+        //});
+
+        $("#SumContainer").bind("pagechanged", function (event) {
+            $('.loading').show();
+            $.ajax({
+                url: '/Accountant/SearchDebtForBank',
+                type: 'post',
+                data: {
+                    pcCode: getPcSelected(),
+                    customer: $('#Customer_Code').val(),
+                    fromdate: $('#FromDate').val(),
+                    todate: $('#ToDate').val(),
+                    status: $('#Status option:selected').val(),
+                    pagenum: event.args.pagenum,
+                    pagesize: event.args.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_sum').val(data.id);
+                        $('#id_fromdate').val(data.fromdate);
+                        $('#id_todate').val(data.todate);
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.totalAmount);
+                        $('#id_total_bill').val(data.total_bill),
+                        $('#id_total_amount').val(data.totalAmount),
+                        $("#SumContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceSum(data));
+                        $("#SumContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $('#btnExportReport').prop('disabled', false);
+                    } else {
+                        $('#total_bill').text(0);
+                        $('#total_amount').text(0);
+                        $('#id_sum').val('');
+                        $('#id_fromdate').val('');
+                        $('#id_todate').val('');
+                        $('#id_total_bill').val(0),
+                        $('#id_total_amount').val(0),
+                        $('#btnExportReport').prop('disabled', true);
+                        $('#SumContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $('#BillContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách hóa đơn</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 500,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            //pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Mã sổ GCS', dataField: 'BookCMIS', width: '8%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã khách hàng', dataField: 'CustomerCode', width: '12%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên khách hàng', dataField: 'Name', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'Address', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Kỳ HĐ', dataField: 'Term', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng tiền', dataField: 'strAmount', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Thời gian chấm', dataField: 'Time_Online', width: '10%', cellsalign: 'left', align: 'center' },              
+                { text:'Kết quả', dataField:'Desc', width: '10%', cellsalign: 'left', align: 'center' }
+            ]          
+        });
+        $('#btnRead').click(function () {
+            $("#uploadFile").val('');
+            $('#btnRead').prop('disabled', true);
+            $('.loading').show();          
+            $.ajax({
+                url: '/Accountant/InsertFile',
+                type: 'post',
+                data: {
+                    id: encodeURI($('#file_key').val()),
+                    pc: $('input[name=EVN]:checked').val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        $("#BillContainer").jqxGrid('refresh');
+                        $("#BillContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceFile(data.Records)) });
+                       
+                    } else {
+                        $('#BillContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (er) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });                     
+        });
+    });
+    function validate(file) {
+        var ext = file.split(".");
+        ext = ext[ext.length - 1].toLowerCase();
+        $('#BillContainer').jqxGrid('clear');
+        if (validExtensions.lastIndexOf(ext) == -1) {
+            $("#uploadFile").val("");
+            document.getElementById('msg_error').innerHTML = 'Định dạng file dữ liệu không đúng';
+            $('#error').modal('show');
+        }
+        else {
+            uploadFile();
+        }
+    }
+    function uploadFile() {
+        var dataFile = new FormData();
+        var files = $("#uploadFile").get(0).files;
+        if (files.length > 0) {
+            dataFile.append("MyFile", files[0]);
+        }
+        $('.loading').show();
+        var check = $('input[name=EVN]:checked').val();
+        if (check == 0) {
+            $.ajax({
+                url: "/Accountant/UploadFile_HN",
+                type: "post",
+                processData: false,
+                contentType: false,
+                data: dataFile,
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result == "SUCCESS") {
+                        $('#file_key').val(data.Message);
+                        $('#btnRead').prop('disabled', false);
+                        $("#BillContainer").jqxGrid('refresh');
+                        $("#BillContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceFile(data.Records)) });
+                    } else {
+                        $('#btnRead').prop('disabled', true);
+                        $('#file_key').val('');
+                        $('#BillContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (er) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        } else {
+            $.ajax({
+                url: "/Accountant/UploadFile_SPC",
+                type: "post",
+                processData: false,
+                contentType: false,
+                data: dataFile,
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result == "SUCCESS") {
+                        $('#file_key').val(data.Message);
+                        $('#btnRead').prop('disabled', false);
+                        $("#BillContainer").jqxGrid('refresh');
+                        $("#BillContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceFile(data.Records)) });
+                    } else {
+                        $('#btnRead').prop('disabled', true);
+                        $('#file_key').val('');
+                        $('#BillContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (er) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        }
+
+       
+    }
+    function sourceFile(data) {
+        var source =
+        {
+            id: 'CustomerCode',
+            localData: data,
+        };
+        return source;
+    }
+
+    function checkCNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+                else {
+                    if ($('#id_sum').val()) {
+                        window.location.href = '/Accountant/ExportDebtBank?id=' + encodeURI($('#id_sum').val()) + '&fromdate=' + encodeURI($('#id_fromdate').val()) +
+                            '&todate=' + encodeURI($('#id_todate').val()) + '&bill=' + encodeURI($('#id_total_bill').val()) +'&amount=' + encodeURI($('#id_total_amount').val()) ;
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function getPcSelected() {
+        var obj = [];
+        var selected = $("#PC option:selected");
+        var message = "";
+        selected.each(function () {
+            obj.push($(this).text());
+        });
+        if (obj.length > 0) {
+            return JSON.stringify(obj);
+        }
+        else
+            return null;
+    }
+    function sourceSum(data) {
+        var source =
+        {
+            datatype: "array",
+            localData: data.Records,
+            totalrecords: data.total_bill,
+            root: 'Rows',
+            beforeprocessing: function (data) {
+                source.totalrecords = data[0].col_0;
+            }
+        };
+        return source;
+    }
+</script>

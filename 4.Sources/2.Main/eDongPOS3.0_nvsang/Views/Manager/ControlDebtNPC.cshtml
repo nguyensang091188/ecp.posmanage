@@ -1,0 +1,373 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ControlDebtModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#ControlDebtNPC" data-toggle="tab">Kiểm soát chấm nợ</a></li>
+                <li class="nav-item"><a href="#FileInfo" data-toggle="tab">Kiểm soát chấm nợ theo File</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="ControlDebtNPC">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.pc, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>                       
+                        <div class="col-md-6 col-sm-6 col-xs-12 text-left ">
+                            <button type="button" id="btnSearch" class="btn btn-success">Tìm kiếm</button>                                
+                        </div>
+                        
+                    </form>
+                    <div id="ControlDebtContainer"></div>
+                </div>
+
+                <div id="FileInfo" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-1 col-sm-1 col-xs-12">File:  </label>
+                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                <input type="file" id="uploadFile"  class="form-control" onchange="validate(this.value);">
+                            </div>
+                            <div class="col-md-5 col-sm-5 col-xs-12">
+                                <button type="button" id="btnRead" class="btn btn-danger" disabled>Đọc file</button>
+                                <button type="button" id="btnGetFile" class="btn btn-dark">Lấy File mẫu</button>    
+                                <input type="hidden" id="file_key" />
+                            </div>
+                        </div>
+                    </form>
+                    <div id="FileContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+
+
+<script type="text/javascript">
+    var validExtensions = ['xls', 'xlsx'];
+    var dataControlDebt = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('#btnGetFile').click(function () {
+            window.location.href = '/Import/Download?filename=' + encodeURI('File_KSCN.xlsx');
+        });
+        $('#ControlDebtContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách thời gian chấm nợ</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" onclick="checkCNN(\'' + 0 + '\',\'' + 0 + '\')" title="Thêm mới thời gian chấm nợ">' +
+                     '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Thêm mới</label></a>' +
+                    '<a id="div_del" href="#" class="navbutton" onclick="checkCNN(\'' + 0 + '\',\'' + 1 + '\')" title="Xóa bản ghi được chọn">' +
+                    '<img src="/images/icon_del.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer; font-size: 11px; font-weight: bold;">Xóa</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            selectionmode: 'checkbox',
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            rowsheight: 40,
+            altrows: true,
+            columns: [
+               {
+                   text: 'STT', datafield: '', columntype: 'number', width: '5%', align: 'center', cellsalign: 'left',
+                   cellsrenderer: function (row, column, value) {
+                       return "<div class= 'jqx-grid-cell-left-align' style='margin-top: 12px;'>" + (value + 1) + "</div>";
+                   }
+               },
+               { text: 'Mã điện lực', datafield: 'col_1', width: '10%', align: 'center', cellsalign: 'left' },
+               { text: 'Tên điện lực', datafield: 'col_2', width: '27%', align: 'center', cellsalign: 'left' },
+               { text: 'Bắt đầu giữ', datafield: 'col_3', columngroup: 'Datetime', width: '15%', align: 'center', cellsalign: 'left' },
+               { text: 'Kết thúc giữ', datafield: 'col_4', columngroup: 'Datetime', width: '15%', align: 'center', cellsalign: 'left' },
+               { text: 'Giờ chấm', datafield: 'col_5', columngroup: 'Datetime', width: '15%', align: 'center', cellsalign: 'left' },
+               {
+                   text: ' ', width: '5%', align: 'center', cellsrenderer: function (row) {
+                       return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                           ' onclick="checkCNN(\'' + row + '\',\'' + 2 + '\')" >' +
+                           '<img src="/images/icon_edit.png" title="Cập nhật"/></a></div>';
+                   }
+               },
+               {
+                   text: ' ', width: '5%', align: 'center', cellsrenderer: function (row) {
+                       return '<div style="text-align: center; margin-top: 10px;"><a href="#" class="navbutton"' +
+                           ' onclick="checkCNN(\'' + row + '\',\'' + 3 + '\')" >' +
+                           '<img src="/images/icon_del.png" title="Xóa bản ghi"/></a></div>';
+                   }
+               }
+            ],
+            columngroups: [
+                { text: 'Thời gian', align: 'center', name: 'Datetime' },
+            ]
+        });
+        $('#btnSearch').click(function () {
+            if (!$('#pc option:selected').val()) {
+                document.getElementById('msg_error').innerHTML = 'Vui lòng chọn điện lực';
+                $("#error").data('myControl', 'pc');
+                $('#error').modal('show');
+            } else {
+                $('.loading').show();
+                $.ajax({
+                    url: '/Manager/SearchControlDebtNPC',
+                    type: 'post',
+                    data: {
+                        pccode: $('#pc option:selected').val()
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == "SUCCESS") {
+                            dataControlDebt = data.Records;
+                            $('#ControlDebtContainer').jqxGrid('clearselection');
+                            $("#ControlDebtContainer").jqxGrid('refresh');
+                            $("#ControlDebtContainer").jqxGrid({ source: new $.jqx.dataAdapter(source(dataControlDebt)) });
+                        } else {
+                            dataControlDebt = null;
+                            $('#ControlDebtContainer').jqxGrid('clear');
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            }
+        });
+
+
+        $('#FileContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách thời gian chấm nợ</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            rowsheight: 40,
+            altrows: true,
+            columns: [
+               {
+                   text: 'STT', datafield: '', columntype: 'number', width: '5%', align: 'center', cellsalign: 'left',
+                   cellsrenderer: function (row, column, value) {
+                       return "<div class= 'jqx-grid-cell-left-align' style='margin-top: 12px;'>" + (value + 1) + "</div>";
+                   }
+               },
+               { text: 'Mã điện lực', datafield: 'col_1', width: '10%', align: 'center', cellsalign: 'left' },
+               { text: 'Tên điện lực', datafield: 'col_2', width: '35%', align: 'center', cellsalign: 'left' },
+               { text: 'Bắt đầu giữ', datafield: 'col_3', columngroup: 'Datetime', width: '15%', align: 'center', cellsalign: 'left' },
+               { text: 'Kết thúc giữ', datafield: 'col_4', columngroup: 'Datetime', width: '15%', align: 'center', cellsalign: 'left' },
+               { text: 'Giờ chấm', datafield: 'col_5', columngroup: 'Datetime', width: '15%', align: 'center', cellsalign: 'left' },
+               { text: 'Kết quả', dataField: 'col_6', width: '19%', align: 'center', cellsalign: 'left' }
+            ],
+            columngroups: [
+                { text: 'Thời gian', align: 'center', name: 'Datetime' },
+            ]
+        });
+
+        $('#btnRead').click(function () {
+            $("#uploadFile").val('');
+            $('#btnRead').prop('disabled', true);
+            $('.loading').show();
+            $.ajax({
+                url: '/Manager/InsertFileContrlDebtNPC',
+                type: 'post',
+                data: {
+                    id: encodeURI($('#file_key').val())
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        $("#FileContainer").jqxGrid('refresh');
+                        $("#FileContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceFile(data.Records)) });
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        $('#FileContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (er) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function sourceFile(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function source(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if(index == 0) // them mới
+                    {
+                        $.ajax({
+                            url: '/Manager/_AddControlDebtNPC',
+                            type: 'get',
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 1) { //xoa all
+                        if (JSON.stringify($('#ControlDebtContainer').jqxGrid('getselectedrowindexes')).length == 2) {
+                            document.getElementById('msg_error').innerHTML = 'Bạn phải chọn ít nhất một bản ghi để xóa';
+                            $('#error').modal('show');
+                        } else {
+                            document.getElementById('msg_yesno').innerHTML = 'Bạn có muốn xóa bản ghi đã chọn không?';
+                            $("#yesno").data('index', 2);
+                            $('#yesno').data('cellValue', JSON.stringify($('#ControlDebtContainer').jqxGrid('getselectedrowindexes')));
+                            $('#yesno').modal('show');
+                        }
+                    } else if (index == 2) { // edit
+                        $.ajax({
+                            type: 'get',
+                            url: '/Manager/_EditControlDebtNPC',
+                            data: {
+                                id: JSON.stringify($("#ControlDebtContainer").jqxGrid('getrowdata', cellValue)),
+                                index: cellValue
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        document.getElementById('msg_yesno').innerHTML = 'Bạn có muốn xóa bản ghi này không?';
+                        $("#yesno").data('index', 1);
+                        $('#yesno').data('cellValue', cellValue);
+                        $('#yesno').modal('show');
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function validate(file) {
+        var ext = file.split(".");
+        ext = ext[ext.length - 1].toLowerCase();
+        $('#FileContainer').jqxGrid('clear');
+        if (validExtensions.lastIndexOf(ext) == -1) {
+            $("#uploadFile").val("");
+            document.getElementById('msg_error').innerHTML = 'Định dạng file dữ liệu không đúng';
+            $('#error').modal('show');
+        }
+        else {
+            uploadFile();
+        }
+    }
+    function uploadFile() {
+        var dataFile = new FormData();
+        var files = $("#uploadFile").get(0).files;
+        if (files.length > 0) {
+            dataFile.append("MyFile", files[0]);
+        }
+        $('.loading').show();
+        $.ajax({
+            url: "/Manager/UploadFileWithdraw",
+            type: "post",
+            processData: false,
+            contentType: false,
+            data: dataFile,
+            success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.Result == "SUCCESS") {
+                    $('#file_key').val(data.Message);
+                    $('#btnRead').prop('disabled', false);
+                } else {
+                    $('#btnRead').prop('disabled', true);
+                    $('#file_key').val('');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (er) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

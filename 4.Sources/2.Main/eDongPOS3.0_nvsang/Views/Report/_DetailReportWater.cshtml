@@ -1,0 +1,344 @@
+﻿@model ePOS3.Models.ReportDetailWater
+<br />
+<form class="form-horizontal form-label-left input_mask">
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Dịch vụ:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.Service_Water, Model.ServiceList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Nhà CC:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.PC_Water, Model.PCList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.Status_Water, Model.StatusList, new { @class = "form-control chosen-select" })
+
+        </div>
+    </div>   
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.AccParent_Water, Model.ParentList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.AccChild_Water, Model.ChildList, new { @multiple = "multiple" })
+
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            <input type="text" id="Customer_Water" class="form-control" maxlength="15">
+        </div>
+    </div>
+    <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />    
+    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-1 col-sm-1 col-xs-12" style="color:red;">Từ ngày:</label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_FromDate_Water" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <label class="control-label col-md-1 col-sm-1 col-xs-12" style="color:red;">đến ngày:  </label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_ToDate_Water" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="col-md-4 col-sm-4 col-xs-12 text-right ">
+            <button type="button" id="btnSearchDetailReportWater" class="btn btn-success">Tìm kiếm</button>      
+            <button type="button" id="btnExportReportWater" class="btn btn-primary" disabled title="Xuất báo cáo chi tiết dịch vụ khác ra định dạng excel" onclick="checkCNN(3)">Xuất File</button>
+            <input type="hidden" id="id_DetailWater" />
+            <input type="hidden" id="id_fromdate" />
+            <input type="hidden" id="id_todate" />
+            <input type="hidden" id="id_pccode" />
+            <input type="hidden" id="id_service_orther" />
+        </div>
+        @*<div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+            
+        </div>*@
+    </div>
+</form>
+<div id="DetailWaterContainer"></div>
+<script type="text/javascript">
+    var dataDetailWater = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#AccChild_Water').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#Service_Water').change(function () {
+            $.ajax({
+                url: '/Report/ChangePC',
+                type: 'post',
+                data: {
+                    service: $("#Service_Water option:selected").val(),
+                    index: 1,
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $("#PC_Water").empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#PC_Water").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#PC_Water").trigger('chosen:updated');
+                        $("#PC_Water").change();
+                    } else {
+                        $("#PC_Water").empty();
+                        $("#PC_Water").append("<option value='" + " " + "'>" + " " + "</option>");
+                        $("#PC_Water").trigger('chosen:updated');
+                        $("#PC_Water").change();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi kết nối';
+                    $('#error').modal('show');
+                }
+            });
+        });
+        $('#AccParent_Water').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccParent_Water option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccChild_Water').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccChild_Water").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccChild_Water").multiselect('rebuild');
+                    } else {
+                        $('#AccChild_Water').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#DetailWaterContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Báo cáo chi tiết [ Tổng giao dịch: <span id='total_tran_water' style='color: red;'>0</span>, Tổng số hóa đơn: <span id='total_bill_water' style='color: red;'>0</span> , Tổng tiền: <span id='total_amount_water' style='color: red;'>0</span> ]</h4></div>");
+                
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            //pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [  
+                { text: 'STT', dataField: 'col_1', width: '5%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Ngày TT', dataField: 'col_2', width: '10%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Ví thanh toán', dataField: 'col_3', width: '15%', align: 'center', cellsalign: 'left', pinned: true, cellclassname: function (row, columnfield, value) { return 'green'; } },
+                { text: 'Số tiền', dataField: 'col_4', width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Số lượng', dataField: 'col_5', width: '7%', align: 'center', cellsalign: 'right' },
+                { text: 'Dịch vụ', dataField: 'col_6', width: '11%', cellsalign: 'left', align: 'center' },
+                { text: 'Nhà cung cấp', dataField: 'col_7', width: '15%', cellsalign: 'left', align: 'center' },
+                { text: 'Mã khách hàng', dataField: 'col_8', width: '13%', cellsalign: 'left', align: 'center' },                
+                { text: 'Trạng thái', dataField: 'col_9', width: '10%', align: 'center', cellsalign: 'left' }
+            ]
+        });
+        $("#DetailWaterContainer").bind("pagechanged", function (event) {            
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetail_Water',
+                type: 'post',
+                data: {
+                    option: $('#Service_Water option:selected').val(),
+                    pcCode: $('#PC_Water option:selected').val(),
+                    pcName: $('#PC_Water option:selected').text(),
+                    account: $('#AccParent_Water option:selected').val(),
+                    edong: getChildSelected(2),
+                    customer: $('#Customer_Water').val(),
+                    fromdate: $('#Syn_Upload_FromDate_Water').val(),
+                    todate: $('#Syn_Upload_ToDate_Water').val(),
+                    status: $('#Status_Water option:selected').val(),
+                    pagenum: event.args.pagenum,
+                    pagesize: event.args.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_DetailWater').val(data.id);
+                        $('#id_fromdate').val(data.fromdate);
+                        $('#id_todate').val(data.todate);
+                        $('#total_bill_water').text(data.total_bill);
+                        $('#total_amount_water').text(data.total_amount);
+                        $('#total_tran_water').text(data.total_tran);
+                        $('#id_pccode').val(data.pc);;
+                        $('#id_service_orther').val(data.service);
+                        $("#DetailWaterContainer").jqxGrid('refresh');
+                        $('#btnExportReportWater').prop('disabled', false);
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetailWater(data));
+                        $("#DetailWaterContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $("#DetailWaterContainer").jqxGrid('updatebounddata', 'cells');
+                    } else {
+                        $('#total_tran_water').text(0);
+                        $('#total_amount_water').text(0);
+                        $('#total_bill_water').text(0);
+                        $('#id_DetailWater').val('');
+                        $('#id_fromdate').val('');
+                        $('#id_todate').val('');
+                        $('#id_pccode').val('');
+                        $('#id_service_orther').val('');
+                        $('#DetailWaterContainer').jqxGrid('clear');
+                        $('#btnExportReportWater').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $('#btnSearchDetailReportWater').click(function () {
+            var paginginformation = $('#DetailWaterContainer').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetail_Water',
+                type: 'post',
+                data: {
+                    option: $('#Service_Water option:selected').val(),
+                    pcCode: $('#PC_Water option:selected').val(),
+                    pcName: $('#PC_Water option:selected').text(),
+                    account: $('#AccParent_Water option:selected').val(),
+                    edong: getChildSelected(2),
+                    customer: $('#Customer_Water').val(),
+                    fromdate: $('#Syn_Upload_FromDate_Water').val(),
+                    todate: $('#Syn_Upload_ToDate_Water').val(),
+                    status: $('#Status_Water option:selected').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_DetailWater').val(data.id);
+                        $('#id_fromdate').val(data.fromdate);
+                        $('#id_todate').val(data.todate);
+                        $('#total_bill_water').text(data.total_bill);
+                        $('#total_amount_water').text(data.total_amount);
+                        $('#total_tran_water').text(data.total_tran);
+                        $('#id_pccode').val(data.pc);
+                        $('#id_service_orther').val(data.service);
+                        $('#btnExportReportWater').prop('disabled', false);
+                        $("#DetailWaterContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetailWater(data));
+                        $("#DetailWaterContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $("#DetailWaterContainer").jqxGrid('updatebounddata', 'cells');
+                    } else {
+                        $('#total_tran_water').text(0);
+                        $('#total_amount_water').text(0);
+                        $('#total_bill_water').text(0);
+                        $('#id_DetailWater').val('');
+                        $('#id_fromdate').val('');
+                        $('#id_todate').val('');
+                        $('#id_pccode').val('');
+                        $('#id_service_orther').val('');
+                        $('#DetailWaterContainer').jqxGrid('clear');
+                        $('#btnExportReportWater').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function () {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });           
+        });
+    });
+
+    function sourceDetailWater(data) {
+        var source =
+        {
+            datatype: "array",
+            localData: data.Records,
+            totalrecords: data.total_tran,
+            root: 'Rows',
+            beforeprocessing: function (data) {
+                source.totalrecords = data[0].col_0;
+            }
+        };
+        return source;
+    }
+</script>

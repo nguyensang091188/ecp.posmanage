@@ -1,0 +1,90 @@
+﻿@model ePOS3.Models.CancelRequestModel
+<div class="modal-dialog modal-sm" style="width:50%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Xác nhận yêu cầu hủy</h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái HĐ:</label>
+                    <label class="control-label col-md-8 col-sm-8 col-xs-12">@ViewBag.status</label>
+
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Quyết định:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        @Html.DropDownListFor(m => m.Decided, Model.DecidedList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Lí do:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <textarea class="form-control" id="Desc" rows="4"></textarea>       
+                    </div>
+                </div> 
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnEdit" class="btn btn-success">Cập nhật</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('#btnEdit').click(function () {
+            if (!$('#Desc').val()) {
+                document.getElementById('msg_error').innerHTML = 'Lý do không được để trống';
+                $("#error").data('myControl', 'Desc');
+                $('#error').modal('show');
+            } else {
+                $('.loading').show();
+                $.ajax({
+                    url: '/Manager/UpdateCancelRequest',
+                    type: 'post',
+                    data: {
+                        index: '@ViewBag.Index',
+                        id: '@ViewBag.idRequest',
+                        status: $('#Decided option:selected').val(),
+                        desc: $('#Desc').val(),
+                        datasource: JSON.stringify(dataCancel)
+                    },
+                    success: function (data) {
+                        $('.loading').hide();
+                        if (data.isRedirect)
+                            window.location.href = data.redirectUrl;
+                        else if (data.Result == "SUCCESS") {
+                            $('#dynamic-modal').modal('hide');
+                            dataCancel = data.Records;
+                            document.getElementById('msg_info').innerHTML = data.Message;
+                            $('#info').data('index', 4);
+                            $('#info').modal('show');
+                          
+                        } else {
+                            document.getElementById('msg_error').innerHTML = data.Message;
+                            $('#error').modal('show');
+                        }
+                    },
+                    error: function (ErrorThrown) {
+                        $('.loading').hide();
+                        window.location.href = '@Url.Action("Login", "ePOS")';
+                    }
+                });
+            }
+        });
+    });
+</script>

@@ -1,0 +1,626 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ReportEDongCashModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#EDongCash" data-toggle="tab">Tổng hợp</a></li>
+                <li class="nav-item"><a href="#EDongCashDetail" data-toggle="tab">Chi tiết</a></li>
+                <li class="nav-item active"><a href="#EDongWallet" data-toggle="tab">Tài khoản ví</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="EDongCash">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví tổng:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Wallet, Model.WalletList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountParent, Model.AccountList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountChild, Model.AccAssignList, new { @multiple = "multiple" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Từ ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">đến ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDate" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-right ">
+                            <button type="button" id="btnSearchEDongCash" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportEDongCash" class="btn btn-primary" disabled title="Xuất báo cáo tổng hợp ra định dạng excel" onclick="checkCNN(1)">Xuất File</button>
+                            <input type="hidden" id="id_sum" />
+                        </div>
+
+                    </form>
+                    <div id="EDongCashContainer"></div>
+                </div>
+                <div id="EDongCashDetail" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví tổng:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.WalletDetail, Model.WalletList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountParentDetail, Model.AccountList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountChildDetail, Model.AccAssignList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Từ ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="FromDateDetail" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">đến ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <fieldset>
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                                <input type="text" class="form-control has-feedback-left datefield" id="ToDateDetail" aria-describedby="inputSuccess2Status">
+                                                <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                                <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-right ">
+                            <button type="button" id="btnSearchEDongCashDetail" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportEDongCashDetail" class="btn btn-primary" disabled title="Xuất báo cáo chi tiết ra định dạng excel" onclick="checkCNN(0)">Xuất File</button>
+                            <input type="hidden" id="id_detail" />
+                            <input type="hidden" id="account" />
+                        </div>
+
+                    </form>
+                    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback table_detail">
+                        <div style="font-size: 16px;padding: 5px 10px 5px 0; color: black; font-weight:bold; font-style:italic; float: left;">
+                            Tồn đầu kỳ:
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Nợ ví tổng: <span id="debt_old">0</span>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Số dư khả dụng: <span id="amount_old">0</span>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Tiền mặt: <span id="cash_old">0</span>
+                        </div>
+                    </div>
+                    <div id="DetailContainer"></div>
+                    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback table_detail">
+                        <div style="font-size: 16px;padding: 5px 10px 5px 0; color: black; font-weight:bold; font-style:italic; float: left;">
+                            Tồn cuối kỳ:
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Nợ ví tổng: <span id="debt_new">0</span>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Số dư khả dụng: <span id="amount_new">0</span>
+                        </div>
+                        <div style="font-size: 13px;padding: 5px 15px 5px 0; color: black; float: left;">
+                            Tiền mặt: <span id="cash_new">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="EDongWallet" class="tab-pane">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountParentWallet, Model.AccountList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:  </label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.AccountChildWallet, Model.AccAssignList, new { @multiple = "multiple" })
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 text-right ">
+                            <button type="button" id="btnSearchEDongWallet" class="btn btn-success">Tìm kiếm</button>
+                            <button type="button" id="btnExportEDongWallet" class="btn btn-primary" disabled title="Xuất báo cáo tài khoản ví ra định dạng excel" onclick="checkCNN(2)">Xuất File</button>
+                            <input type="hidden" id="id_wallet" />
+                        </div>
+
+                    </form>
+                    <div id="EDongWalletContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        //tong hop
+        $('#AccountChild').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#EDongCashContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: skyblue;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách ví</h4></div>");
+
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Số ví', dataField: 'col_1', width: '10%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Họ tên', dataField: 'col_2', width: '15%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Nợ ví tổng', dataField: 'col_3', columngroup: 'BeginPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Số dư KD', dataField: 'col_4', columngroup: 'BeginPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Tiền mặt', dataField: 'col_5', columngroup: 'BeginPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Ứng ví tổng', dataField: 'col_6', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Hoàn ví tổng', dataField: 'col_7', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Đã thanh toán', dataField: 'col_8', columngroup: 'OccurredDuringPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Đang chờ xử lý', dataField: 'col_9', columngroup: 'OccurredDuringPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Tổng', dataField: 'col_10', columngroup: 'OccurredDuringPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: '(+)', dataField: 'col_11', columngroup: 'OtherTransaction', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: '(-)', dataField: 'col_12', columngroup: 'OtherTransaction', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Nợ ví tổng', dataField: 'col_13', columngroup: 'EndPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Số dư KD', dataField: 'col_14', columngroup: 'EndPeriod', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Tiền mặt', dataField: 'col_15', columngroup: 'EndPeriod', width: '10%', align: 'center', cellsalign: 'right' }
+            ],
+            columngroups: [
+                { text: 'Đầu kỳ', align: 'center', name: 'BeginPeriod' },
+                { text: 'Phát sinh trong kỳ', align: 'center', name: 'OccurredDuringPeriod' },
+                { text: 'Giao dịch khác', align: 'center', name: 'OtherTransaction' },
+                { text: 'Cuối kỳ', align: 'center', name: 'EndPeriod' },
+            ]
+        });
+        $('#AccountParent').change(function () {
+            $.ajax({
+                url: "/ePOS/GetAccountChild",
+                type: 'POST',
+                data: {
+                    type: $("#AccountParent option:selected").val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccountChild').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccountChild").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccountChild").multiselect('rebuild');
+                    } else {
+                        $('#AccountChild').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#btnSearchEDongCash').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchEDongCash',
+                type: 'post',
+                data: {
+                    wallet: $("#Wallet option:selected").val(),
+                    Account: $("#AccountParent option:selected").val(),
+                    ListAcc: GetEdongCash(1),
+                    FromDate: $("#FromDate").val(),
+                    ToDate: $("#ToDate").val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_sum').val(data.id);
+                        $("#EDongCashContainer").jqxGrid('refresh');
+                        $("#EDongCashContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceSum(data.Records)) });
+                        $('#btnExportEDongCash').prop('disabled', false);
+                    } else {
+                        $('#id_sum').val('');
+                        $('#btnExportEDongCash').prop('disabled', false);
+                        $('#EDongCashContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        //chi tiet
+        $('#AccountParentDetail').change(function () {
+            $.ajax({
+                url: "/ePOS/GetAccountChild",
+                type: 'POST',
+                data: {
+                    type: $("#AccountParentDetail option:selected").val()
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccountChildDetail').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccountChildDetail").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccountChildDetail").multiselect('rebuild');
+                    } else {
+                        $('#AccountChildDetail').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#DetailContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách chi tiết ví</h4></div>");
+
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Ngày', dataField: 'col_1', width: '10%', align: 'center', pinned: true, cellsalign: 'left' },
+                { text: 'Ứng ví tổng', dataField: 'col_2', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Hoàn ví tổng', dataField: 'col_3', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Đã thanh toán', dataField: 'col_4', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Đang chờ xử lý', dataField: 'col_5', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: '(+)', dataField: 'col_6', columngroup: 'TransOrther', width: '8%', align: 'center', cellsalign: 'right' },
+                { text: '(-)', dataField: 'col_7', columngroup: 'TransOrther', width: '8%', align: 'center', cellsalign: 'right' },
+                { text: 'Cộng', dataField: 'col_8', width: '12%', align: 'center', cellsalign: 'right' },
+                { text: 'Nợ ví tổng', dataField: 'col_9', columngroup: 'Extant', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Số dư KD', dataField: 'col_10', columngroup: 'Extant', width: '10%', align: 'center', cellsalign: 'right' },
+                { text: 'Tiền mặt', dataField: 'col_11', columngroup: 'Extant', width: '10%', align: 'center', cellsalign: 'right' }
+
+            ],
+            columngroups: [
+                { text: 'Giao dịch khác', align: 'center', name: 'TransOrther' },
+                { text: 'Còn lại', align: 'center', name: 'Extant' }
+            ]
+        });
+        $('#btnSearchEDongCashDetail').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchEDongCashDetail',
+                type: 'post',
+                data: {
+                    wallet: $('#WalletDetail option:selected').val(),
+                    account: $('#AccountChildDetail option:selected').val(),
+                    name: $('#AccountChildDetail option:selected').text(),
+                    FromDate: $("#FromDateDetail").val(),
+                    ToDate: $("#ToDateDetail").val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detail').val(data.id);
+                        document.getElementById("debt_old").innerHTML = data.Records.debt_old;
+                        document.getElementById("amount_old").innerHTML = data.Records.Amount_old;
+                        document.getElementById("cash_old").innerHTML = data.Records.cash_old;
+                        document.getElementById("debt_new").innerHTML = data.Records.debt_new;
+                        document.getElementById("amount_new").innerHTML = data.Records.Amount_new;
+                        document.getElementById("cash_new").innerHTML = data.Records.cash_new;
+                        $('#account').val(data.account);
+                        $("#DetailContainer").jqxGrid('refresh');
+                        $("#DetailContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceDetail(data.Records.items)) });
+                        $('#btnExportEDongCashDetail').prop('disabled', false);
+                    } else {
+                        $('#id_detail').val('');
+                        $('#account').val('');
+                        $('#DetailContainer').jqxGrid('clear');
+                        document.getElementById("debt_old").innerHTML = "0";
+                        document.getElementById("amount_old").innerHTML = "0";
+                        document.getElementById("cash_old").innerHTML = "0";
+                        document.getElementById("debt_new").innerHTML = "0";
+                        document.getElementById("amount_new").innerHTML = "0";
+                        document.getElementById("cash_new").innerHTML = "0";
+                        $('#btnExportEDongCashDetail').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        //
+        $('#AccountParentWallet').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccountParentWallet option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccountChildWallet').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccountChildWallet").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccountChildWallet").multiselect('rebuild');
+                    } else {
+                        $('#AccountChildWallet').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $('#AccountChildWallet').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#EDongWalletContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách chi tiết ví</h4></div>");
+
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Số ví', dataField: 'col_1', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Họ tên', dataField: 'col_2', width: '25%', align: 'center', cellsalign: 'left' },
+                { text: 'Số dư ví', dataField: 'col_3', width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền thu Offline', dataField: 'col_4', width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Số tiền bị khóa', dataField: 'col_5', width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Số dư khả dụng', dataField: 'col_6', width: '15%', align: 'center', cellsalign: 'right' }
+            ]
+        });
+        $('#btnSearchEDongWallet').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchEDongWallet',
+                type: 'post',
+                data: {
+                    Account: $("#AccountParentWallet option:selected").val(),
+                    ListAcc: GetEdongCash(2),
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_wallet').val(data.id);
+                        $("#EDongWalletContainer").jqxGrid('refresh');
+                        $("#EDongWalletContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceWallet(data.Records)) });
+                        $('#btnExportEDongWallet').prop('disabled', false);
+                    } else {
+                        $('#btnExportEDongWallet').prop('disabled', true);
+                        $('#id_wallet').val('');
+                        $('#EDongWalletContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+    });
+    function checkCNN(index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    if (index == 1) {
+                        if ($('#id_sum').val()) {
+                            window.location.href = '/Report/ExportEDongCash?id=' + encodeURI($('#id_sum').val());
+                        }
+                    } else if (index == 2) {
+                        if ($('#id_wallet').val()) {
+                            window.location.href = '/Report/ExportEDongWallet?id=' + encodeURI($('#id_wallet').val());
+                        }
+                    } else {
+                        if ($('#id_detail').val()) {
+                            window.location.href = '/Report/ExportEDongCashDetail?id=' + encodeURI($('#id_detail').val()) + '&account=' + $('#account').val();
+                        }
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        })
+    }
+    function sourceSum(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function sourceDetail(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+
+    function sourceWallet(data) {
+        var source =
+       {
+           id: 'col_1',
+           localData: data,
+       };
+        return source;
+    }
+    function GetEdongCash(index) {
+        var obj = [];
+        if (index == 1) {
+            var selected = $("#AccountChild option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        } else {
+            var selected = $("#AccountChildWallet option:selected");
+            var message = "";
+            selected.each(function () {
+                obj.push($(this).text());
+            });
+        }
+
+
+        if (obj.length > 0) {
+            return JSON.stringify(obj);
+        }
+        else
+            return null;
+    }
+</script>

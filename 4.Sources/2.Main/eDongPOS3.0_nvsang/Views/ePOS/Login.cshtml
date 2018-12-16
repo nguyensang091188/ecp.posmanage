@@ -1,0 +1,121 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+}
+<div class="container-fluid login">
+   
+    <form class="form-signin">
+        <div class="row" style="text-align:center;">
+            <img src="~/images/logo.png" />
+        </div>       
+        <div class="row">
+            <div class="col-md-4"><label for="inputEmail">Tên đăng nhập:</label></div>
+            <div class="col-md-8"><input type="text" id="txt_user" class="form-control" placeholder="Vui lòng nhập tên đăng nhập" required autofocus></div>
+        </div>
+        <div class="row">
+            <div class="col-md-4"><label for="inputPassword">Mật khẩu:</label></div>
+            <div class="col-md-8"><input type="password" id="txt_pass" class="form-control" placeholder="Vui lòng nhập mật khẩu" required></div>
+        </div>
+        <div class="row">
+            <div class="col-md-4"><label for="inputCode">Mã bảo vệ:</label></div>
+            <div class="col-md-3"><input type="text" id="txt_captchar" class="form-control" required></div>
+            <div class="col-md-3" style="float:left;"><img id="img_capcha" class="img-responsive" style="height:44px;"></div>
+            <div class="col-md-2"><img src="~/images/icon_refresh.png" style="cursor:pointer" id="refresh_capchar"></div>
+        </div>
+        <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-6"><button class="btn btn-lg btn-primary btn-block btn-height" type="button" id="btnLogin">Đăng nhập</button></div>
+            <div class="col-md-3"></div>
+        </div>
+    </form>
+</div>
+
+@Html.Partial("~/Views/Control/Dialog_Error.cshtml")
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#img_capcha").attr('src', '/ePOS/generateCaptcha/' + new Date().getTime());
+        $('#refresh_capchar').click(function () {
+            $("#img_capcha").attr('src', '/ePOS/generateCaptcha/' + new Date().getTime());
+        });       
+        $('#btnLogin').click(function () {           
+            doLogin();
+        });
+        $('#txt_user').val('0985281093');
+        $('#txt_pass').val('123456');
+
+        $("#txt_user").jqxInput();
+        $("#txt_captchar").jqxInput();
+        $("#txt_pass").jqxPasswordInput({ showStrength: true, showStrengthPosition: "right" });
+        $('#txt_pass').forcePasswword()
+        $(document).keydown(function (event) {
+            var keycode = (event.keyCode ? event.keyCode : event.which);
+            if (keycode == '13') {
+                event.preventDefault();               
+                if ($('#error').is(':visible')) {
+                    $('#error').modal('hide');
+                } else {
+                    doLogin();
+                }               
+            }
+        });
+    });
+    jQuery.fn.forcePasswword = function () {
+        return this.each(function () {
+            $(this).keydown(function (e) {
+                var key = e.which || e.keyCode;
+                if (key == 32)
+                    return false;
+                return true;
+            });
+        })
+    }
+    function doLogin() {
+        if (!$("#txt_user").val()) {
+            document.getElementById('msg_error').innerHTML = 'Yêu cầu nhập thông tin trường tài khoản';
+            $("#error").data('myControl', 'txt_user');
+            $('#error').modal('show');
+        } else if (!$("#txt_pass").val()) {
+            $("#error").data('myControl', 'txt_pass');
+            document.getElementById('msg_error').innerHTML = 'Yêu cầu nhập thông tin trường mật khẩu';
+            $('#error').modal('show');
+        } else if (!$('#txt_captchar').val()) {
+            $("#error").data('myControl', 'txt_captchar');
+            document.getElementById('msg_error').innerHTML = 'Vui lòng nhập mã xác thực';
+            $('#error').modal('show');
+        } else {
+            $('.loading').show();
+            var objects = { user: $('#txt_user').val(), password: $('#txt_pass').val(), captchar: $('#txt_captchar').val() };
+            $.ajax({
+                url: '/ePOS/Login',
+                type: 'post',
+                data: JSON.stringify(objects),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.Result == 'SUCCESS') {
+                        window.location.href = '@Url.Action("Account", "ePOS")';
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        var index = data.index;
+                        if (index == 1) {
+                            $("#error").data('myControl', 'txt_pass');  
+                        } else if (index == 2) {
+                            $("#error").data('myControl', 'txt_captchar');
+                            $("#error").data('captchar', index);                         
+                        } else {
+                            $("#img_capcha").attr('src', '/ePOS/generateCaptcha/' + new Date().getTime());                           
+                        }
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('.loading').hide();
+                    document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                    $('#error').modal('show');
+                }
+            });
+        }
+    }
+</script>
+

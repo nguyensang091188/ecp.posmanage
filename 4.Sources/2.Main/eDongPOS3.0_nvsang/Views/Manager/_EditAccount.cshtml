@@ -1,0 +1,200 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function () {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.EditAccountModel
+<div class="modal-dialog modal-sm" style="width:70%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Cập nhật thông tin ví: <b>@ViewBag.account <b /></h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Họ và tên:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <input type="text" id="name" class="form-control" maxlength="200" value="@ViewBag.name">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Điện thoại:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <input type="text" id="phone" class="form-control" maxlength="12" value="@ViewBag.phone">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Loại tài khoản:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        @if (posAccount.type == -1)
+                        {
+                            @Html.DropDownListFor(m => m.type, Model.TypeList, new { @class = "form-control chosen-select" })
+                        }
+                        else
+                        {
+                            @Html.DropDownListFor(m => m.type, Model.TypeList, new { @class = "form-control chosen-select" , @disabled = "disabled" })
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Email:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <input type="text" id="email" class="form-control" maxlength="200" value="@ViewBag.email">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Số giấy tờ:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <input type="text" id="IdNumber" class="form-control" maxlength="12" value="@ViewBag.idnumber">
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Ngày cấp:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="IdNumberDate" aria-describedby="inputSuccess2Status" value="@ViewBag.idnumberdate">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Nơi cấp:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <textarea class="form-control" id="IdNumberPlace" rows="3" maxlength="200">@ViewBag.idnumberplace</textarea>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Địa chỉ:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <textarea class="form-control" id="address" rows="3" maxlength="200">@ViewBag.address</textarea>
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-12 col-sm-12 col-xs-12" style="background: cadetblue;">Chốt nợ ví tổng</label>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12">Cuối ngày:  </label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="debtdate" aria-describedby="inputSuccess2Status" value="@ViewBag.debtdate">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-4 col-sm-4 col-xs-12"> Số tiền nợ ví tổng:</label>
+                    <div class="col-md-8 col-sm-8 col-xs-12">
+                        <input type="text" id="debtamount" class="form-control" maxlength="12" value="@ViewBag.debtamount">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Bỏ qua</button>
+            <button type="button" id="btnEdit" class="btn btn-success">Cập nhật</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#IdNumber').forceNumeric();
+        $('#phone').forceNumeric();
+        $('#debtamount').forceNumeric();
+        $('#debtamount').keyup(function (event) {
+            if (event.which >= 37 && event.which <= 40) {
+                event.preventDefault();
+            }
+            var $this = $(this);
+            var num = $this.val().replace(/,/gi, "").split("").reverse().join("");
+            var num2 = RemoveRougeChar(num.replace(/(.{3})/g, "$1,").split("").reverse().join(""));
+            $this.val(num2);
+        });
+        $('#btnEdit').click(function () {
+            $.ajax({
+                url: '/Manager/UpdateAcc',
+                type: 'post',
+                data: {
+                    edong: '@ViewBag.account',
+                    name: $('#name').val(),
+                    address: $('#address').val(),
+                    idNumber: $('#IdNumber').val(),
+                    idNumberDate: $('#IdNumberDate').val(),
+                    idNumberPlace: $('#IdNumberPlace').val(),
+                    email: $('#email').val(),
+                    type: $('#type option:selected').val(),
+                    phone: $('#phone').val(),
+                    debtdate: $('#debtdate').val(),
+                    debtamount: $('#debtamount').val(),
+                    datasource: JSON.stringify(datasource)
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    if (data.Result === 'SUCCESS') {
+                        datasource = data.Records;
+                        $('#dynamic-modal').modal('hide');
+                        $("#treeGrid").jqxTreeGrid('refresh');
+                        $("#treeGrid").jqxTreeGrid({ source: new $.jqx.dataAdapter(source(datasource)) });
+                        $("#treeGrid").jqxTreeGrid('expandAll');
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('#dynamic-modal').modal('hide');
+                }
+            });
+        })
+    });
+</script>

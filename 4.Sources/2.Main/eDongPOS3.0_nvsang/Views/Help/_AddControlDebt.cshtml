@@ -1,0 +1,178 @@
+﻿@model ePOS3.Models.ControlDebtModel
+<div class="modal-dialog modal-sm" style="width:50%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Thêm mới thời gian chấm nợ </h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Tổng công ty:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Corporation, Model.CorporationList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Mã điện lực:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.pc_code, Model.PCList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Bắt đầu giữ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="Add_Date_Start" aria-describedby="inputSuccess2Status" value="@ViewBag.day1">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <label class="control-label col-md-2 col-sm-2 col-xs-12" style="padding-left:50px;">giờ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <input type="text" id="Add_Time_Start" class="form-control has-feedback-left timepicker" maxlength="6" value="@ViewBag.time1" />
+                    </div>
+
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Kết thúc giữ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="Add_Date_End" aria-describedby="inputSuccess2Status" value="@ViewBag.day2">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <label class="control-label col-md-2 col-sm-2 col-xs-12" style="padding-left:50px;">giờ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <input type="text" id="Add_Time_End" class="form-control has-feedback-left timepicker" maxlength="6" value="@ViewBag.time2" />
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Giờ chấm:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                                        <input type="text" class="form-control has-feedback-left datefield" id="Add_Date_Slow" aria-describedby="inputSuccess2Status" value="@ViewBag.day3">
+                                        <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                                        <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <label class="control-label col-md-2 col-sm-2 col-xs-12" style="padding-left:50px;">giờ:  </label>
+                    <div class="col-md-3 col-sm-3 col-xs-12">
+                        <input type="text" id="Add_Time_Slow" class="form-control has-feedback-left timepicker" maxlength="6" value="@ViewBag.time3" />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnAdd" class="btn btn-success">Thêm mới</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var dataControlDebt = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.timepicker').forceNumeric();
+        $(".timepicker").timepicker({
+            timeFormat: 'HH:mm:ss',
+            interval: 1,
+            dynamic: false,
+            dropdown: false,
+            scrollbar: false
+        });
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#Corporation').focus();
+        $('#Corporation').change(function () {
+            $.ajax({
+                url: '/ePOS/getPCbyEVN',
+                type: 'post',
+                data: {
+                    id: $("#Corporation option:selected").val(),
+                    index: '3',
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    $('#pc_code').empty();
+                    $.each(data.Data, function (index, optionData) {
+                        $("#pc_code").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                    });
+                    $("#pc_code").trigger('chosen:updated');
+                    $("#pc_code").change();
+                },
+                error: function (errorThrown) {
+                    document.getElementById('msg_error').innerHTML = 'Lỗi kết nối';
+                    $('#error').modal('show');
+                }
+            })
+        });
+        $('#btnAdd').click(function () {
+            $.ajax({
+                url: '/Help/AddDebt',
+                type: 'post',
+                data: {
+                    pccode: $('#pc_code option:selected').val(),
+                    date_start: $('#Add_Date_Start').val(),
+                    time_start: $('#Add_Time_Start').val(),
+                    date_end: $('#Add_Date_End').val(),
+                    time_end: $('#Add_Time_End').val(),
+                    date_slow: $('#Add_Date_Slow').val(),
+                    time_slow: $('#Add_Time_Slow').val()
+                },
+                success: function (data) {
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    else if (data.Result == "SUCCESS") {
+                        $('#dynamic-modal').modal('hide');
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                     window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+</script>

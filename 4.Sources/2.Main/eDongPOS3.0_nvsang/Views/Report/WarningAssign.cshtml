@@ -1,0 +1,211 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function () {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ReportPointCollectionModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#WarningAssign_NPC" data-toggle="tab">Hạn mức NPC</a></li>
+                <li class="nav-item"><a href="#WarningAssign_CPC" data-toggle="tab">Hạn mức CPC</a></li>
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="WarningAssign_NPC">
+                    <br />
+                    <div id="GridWarning_NPC"></div>
+                </div>
+                <div class="tab-pane" id="WarningAssign_CPC">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty điện lực:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+                            <button type="button" id="btnSearch_CPC" class="btn btn-success">Thống kê</button>
+                        </div>
+                    </form>
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-3 col-sm-3 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <label id="day" class="control-label" style="color:red;"></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tiền cọc:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <label id="amount_1" class="control-label" style="color:red;"></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Chấm trong ngày:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <label id="amount_2" class="control-label" style="color:red;"></label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('#GridWarning_NPC').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách điện lực [ Ngày: <span id='daynow' style='color: red;'>0</span> ]</h4> " +
+                    "<button type='button' id='btnSearchSummaryReport' class='btn btn-success' style='float: right;margin-right: 10px;' onclick='getWarning_NPC()' >Thống kê</button></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                { text: 'Mã điện lực', dataField: 'col_1', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên điện lực', dataField: 'col_2', width: '15%', align: 'center', cellsalign: 'left' },
+                { text: 'Tiền cọc', dataField: 'col_3', width: '15%', align: 'center', cellsalign: 'right' },
+                { text: 'Tiền truy vấn', dataField: 'col_4', align: 'center', cellsalign: 'right', width: '15%' },
+                { text: 'Đã chuyển', dataField: 'col_5', align: 'center', cellsalign: 'right', width: '15%' },
+                { text: 'Chấm trong ngày', dataField: 'col_6', align: 'center', cellsalign: 'right', width: '15%' },
+                { text: 'Tỷ lệ hạn mức', dataField: 'col_7', align: 'center', cellsalign: 'right', width: '15%' }
+            ]
+        });
+        //$('#GridWarning_NPC').jqxGrid({
+        //    width: '100%',
+        //    autoheight: true,
+        //    renderToolbar: function (toolbar) {
+        //        var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+        //            "<h4 style='margin-top: 10px; float: left; padding-left: 10px;font-size: 11px; font-weight: bold;'>Danh sách điện lực [ Ngày: <span id='daynow' style='color: red;'>0</span> ]</h4> " +
+        //            "<button type='button' id='btnSearchSummaryReport' class='btn btn-success' style='float: right;margin-right: 10px;' onclick='getWarning_NPC()' >Thống kê</button></div>");
+        //        toolbar.append(container);
+        //    },
+        //    enablebrowserselection: true,
+        //    columnsresize: true,
+        //    sortable: false,
+        //    pageable: true,
+        //    pagesize: 50,
+        //    pagesizeoptions: ['50', '100', '200', '300', '500'],
+        //    pagerMode: 'advanced',
+        //    showToolbar: true,
+        //    autorowheight: true,
+        //    altrows: true,
+        //    columns: [
+        //        { text: 'CTy Điện lực', dataField: 'col_1', width: '25%', align: 'center', cellsalign: 'left' },
+        //        { text: 'Bảo lãnh', dataField: 'col_2', columngroup: 'TotalAmount', width: '15%', align: 'center', cellsalign: 'right' },
+        //        { text: 'Tiền tồn đối soát', dataField: 'col_3', columngroup: 'TotalAmount', width: '15%', align: 'center', cellsalign: 'right' },
+        //        { text: 'Đã chấm', dataField: 'col_4', columngroup: 'TotalAmount', align: 'center', cellsalign: 'right', width: '15%' },
+        //        { text: 'Giao thu', dataField: 'col_5', columngroup: 'TotalAmount', align: 'center', cellsalign: 'right', width: '15%' },
+        //        { text: 'Còn lại', dataField: 'col_6', columngroup: 'TotalAmount', align: 'center', cellsalign: 'right', width: '15%' },
+        //    ],
+        //    columngroups: [
+        //        { text: 'Tổng tiền', align: 'center', name: 'TotalAmount' },
+        //    ]
+        //});
+
+        $('#daynow').text('@DateTime.Now.ToString("dd-MM-yyyy")');
+        getWarning_NPC();
+        $('#btnSearch_CPC').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/WarningAssign_CPC',
+                type: 'post',
+                data: {
+                    pc: $("#PC option:selected").val(),
+                },
+                success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                else if (data.Result == "SUCCESS") {
+                    document.getElementById('day').innerHTML = data.day;
+                    document.getElementById('amount_1').innerHTML = data.amount_1;
+                    document.getElementById('amount_2').innerHTML = data.amount_2;
+                } else {
+                    document.getElementById('day').innerHTML ='';
+                    document.getElementById('amount_1').innerHTML = '';
+                    document.getElementById('amount_2').innerHTML = '';
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+            });
+        })
+        
+    });
+    function getWarning_NPC() {
+        $('.loading').show();
+        $.ajax({
+            url: '/Report/WarningAssign_NPC',
+            type: 'post',
+            success: function (data) {
+                $('.loading').hide();
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                else if (data.Result == "SUCCESS") {
+                    $("#GridWarning_NPC").jqxGrid('refresh');
+                    $("#GridWarning_NPC").jqxGrid({ source: new $.jqx.dataAdapter(sourceCheckDetail(data.Records)) });
+                } else {
+                    $("#GridWarning_NPC").jqxGrid('clear');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                $('.loading').hide();
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceCheckDetail(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+</script>

@@ -1,0 +1,124 @@
+﻿<div class="modal-dialog modal-sm" style="width:900px; ">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Lịch sử</h5>
+        </div>
+        <div class="modal-body">
+            <div id="HistoryEVNHPContainer"></div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal-detail"></div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#HistoryEVNHPContainer').jqxGrid({
+            width: '100%',
+            height: '96%',
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách lịch sử tải hóa đơn tự động</h4></div>");
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: 'STT', datafield: '', columntype: 'number', width: 50, align: 'center', cellsalign: 'left',
+                    cellsrenderer: function (row, column, value) {
+                        return "<div class= 'jqx-grid-cell-left-align' style='margin-top: 12px;'>" + (value + 1) + "</div>";
+                    }
+                },
+                {
+                    text: ' ', width: '3%', align: 'center', cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                            ' onclick="CheckDetail(\'' + row + '\' )" >' +
+                            '<img src="/images/list_metro.png" title="Xem thông tin chi tiết"/></a></div>';
+                    }
+                },
+                { text: 'Mã điện lực', width: 100, dataField: 'col_2', align: 'center', cellsalign: 'left' },
+                { text: 'Mã TNV', dataField: 'col_3', width: 100, align: 'center', cellsalign: 'left' },
+                { text: 'Số hóa đơn', dataField: 'col_4', width: 120, cellsalign: 'right', align: 'center' },
+                { text: 'Số tiền', dataField: 'col_5', width: 140, cellsalign: 'right', align: 'center' },
+                { text: 'Ngày quét', dataField: 'col_6', width: 180, cellsalign: 'right', align: 'center' }
+            ]
+        });
+        getHistory();
+    });
+    function getHistory() {
+        $.ajax({
+            url: '/Manager/GetHistoryEVNHP',
+            type: 'post',
+            data: {
+                pcCode: '@ViewBag.pcCode'
+            },
+            success: function (data) {
+                if (data.isRedirect)
+                    window.location.href = data.redirectUrl;
+                if (data.Result == "SUCCESS") {
+                    $("#HistoryEVNHPContainer").jqxGrid('refresh');
+                    $("#HistoryEVNHPContainer").jqxGrid({
+                        source: new $.jqx.dataAdapter(sourceHistory(data.Records))
+                    });
+                } else {
+                    $('#dynamic-modal').modal('hide');
+                    document.getElementById('msg_error').innerHTML = data.Message;
+                    $('#error').modal('show');
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceHistory(data) {
+        var source =
+        {
+            id: 'col_1',
+            localData: data,
+        };
+        return source;
+    }
+    function CheckDetail(cellValue) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    $.ajax({
+                        type: 'get',
+                        url: '/Manager/_HistoryDetailEVNHP',
+                        data: {
+                            pc: encodeURI($("#HistoryEVNHPContainer").jqxGrid('getrowdata', cellValue).col_2),
+                            id: encodeURI($("#HistoryEVNHPContainer").jqxGrid('getrowdata', cellValue).col_1)
+                        },
+                        success: function (data) {
+                            $('#dynamic-modal-detail').html(data);
+                            $("#dynamic-modal-detail").modal('show');
+                        },
+                        error: function (ErrorThrown) {
+                            $('#dynamic-modal').modal('hide');
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });                    
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+</script>

@@ -1,0 +1,126 @@
+﻿@model ePOS3.Models.AddBookCISModel
+<div class="modal-dialog modal-sm" style="width:50%;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h5 class="modal-title">Cập nhật thông tin sổ GCS</h5>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal form-label-left input_mask">                
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Công ty ĐL:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_PCCode, Model.PCList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Ngày GCS:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_Day, Model.DayList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Ngày phát hành:</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @Html.DropDownListFor(m => m.Add_Released, Model.DayList, new { @class = "form-control chosen-select" })
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Trạng thái:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        @if (ViewBag.status == 1)
+                        {
+                            <label class="radio-inline"><input type="radio" id="Add_status" name="status" checked="checked" value="1">Đã kích hoạt</label>
+                            <label class="radio-inline"><input type="radio" id="Add_status" name="status" value="0">Chưa kích hoạt</label>
+                        }
+                        else
+                        {
+                            <label class="radio-inline"><input type="radio" id="Add_status" name="status" value="1">Đã kích hoạt</label>
+                            <label class="radio-inline"><input type="radio" id="Add_status" name="status" checked="checked" value="0">Chưa kích hoạt</label>
+                        }                        
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Sổ GCS:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <textarea class="form-control" id="Add_BookCMIS" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Email:  </label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        <textarea class="form-control" id="Add_Email" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Ngày tạo:  </label>
+                    <label class="control-label col-md-9 col-sm-9 col-xs-12">@ViewBag.Sysdate</label>
+
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Thoát</button>
+            <button type="button" id="btnAdd" class="btn btn-success">Thêm mới</button>
+            <input type="hidden" id="check" value="@ViewBag.check" />
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('#btnEdit').click(function () {
+            $.ajax({
+                url: '/Manager/doEditBookCMIS',
+                type: 'post',
+                data: {
+                    id: $('#IDbookCMIS').val(),
+                    pcCode: $("#Add_PCCode option:selected").val(),
+                    bookCMIS: $('#Add_BookCMIS').val(),
+                    day: $("#Add_Day option:selected").val(),
+                    day_released: $('#Add_Released option:selected').val(),
+                    status: $('input[name="status"]').filter(':checked').val(),
+                    email: $('#Email').val(),
+                    datasource: JSON.stringify(datasoureBookCMIS)
+                },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    }
+                    if (data.Result === 'SUCCESS') {
+                        datasoureBookCMIS = data.Records;
+                        $('#dynamic-modal').modal('hide');
+                        $("#BookCMISContainer").jqxGrid('refresh');
+                        $("#BookCMISContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourceBookCMIS(datasoureBookCMIS)) });
+                        $("#BookCMISContainer").jqxGrid('selectrow', data.index);
+                        document.getElementById('msg_info').innerHTML = data.Message;
+                        $('#info').modal('show');
+                    } else {
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        if (data.index != 0) {
+                            if (data.index == 1) {
+                                $("#error").data('myControl', 'Add_Email');
+                            }
+                        }
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    $('#dynamic-modal').modal('hide');
+                }
+            });
+        });
+    });
+
+</script>

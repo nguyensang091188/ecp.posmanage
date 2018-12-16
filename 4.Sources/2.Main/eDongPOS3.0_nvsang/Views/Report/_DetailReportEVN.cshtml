@@ -1,0 +1,385 @@
+﻿
+@model ePOS3.Models.ReportDetailEVNModel
+<br />
+<form class="form-horizontal form-label-left input_mask">
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty ĐL:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.PC_EVN, Model.PCList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví quản lý:  </label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.AccParent_EVN, Model.ParentList, new { @class = "form-control chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Ví TNV:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.AccChild_EVN, Model.ChildList, new { @multiple = "multiple" })
+
+        </div>
+    </div>
+
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã KH:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            <input type="text" id="Customer_EVN" class="form-control" maxlength="15">
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã GCS:  </label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            <input type="text" id="Syn_GCS_Code_EVN" class="form-control" maxlength="15">
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Trạng thái TT:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.Status_EVN, Model.StatusDetailList, new { @class = "chosen-select" })
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-4 col-sm-4 col-xs-12">Loại TK:</label>
+        <div class="col-md-8 col-sm-8 col-xs-12">
+            @Html.DropDownListFor(m => m.StatusAcc_EVN, Model.StatusAccList, new { @class = "chosen-select" })
+        </div>
+    </div>
+    <hr width="100%" align="center" color="#0084e9" style="margin: 0 0 10px 0; height: 1px;" />
+    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-2 col-sm-2 col-xs-12">Chấm nợ từ ngày:</label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_FromDate_EVN" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <label class="control-label col-md-2 col-sm-2 col-xs-12">đến ngày:  </label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Pay_ToDate_EVN" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+            <button type="button" id="btnSearchDetailReportEVN" class="btn btn-success">Tìm kiếm</button>
+            <input type="hidden" id="id_detailEVN" />
+        </div>
+    </div>
+    <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
+        <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">Thu từ ngày:</label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_FromDate_EVN" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <label class="control-label col-md-2 col-sm-2 col-xs-12" style="color:red;">đến ngày:  </label>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="col-md-11 xdisplay_inputx form-group has-feedback">
+                            <input type="text" class="form-control has-feedback-left datefield" id="Syn_Upload_ToDate_EVN" value="@DateTime.Today.ToString("dd/MM/yyyy")" aria-describedby="inputSuccess2Status">
+                            <span class="fa fa-calendar-o form-control-feedback left" aria-hidden="true"></span>
+                            <span id="inputSuccess2Status" class="sr-only">(success)</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="col-md-2 col-sm-2 col-xs-12 text-left ">
+            <button type="button" id="btnExportDetailReportEVN" class="btn btn-primary" disabled title="Xuất báo cáo chi tiết tiền điện ra định dạng excel" onclick="checkCNN(2)">Xuất File</button> 
+           
+        </div>
+    </div>   
+</form>
+<div id="DetailEVNContainer"></div>
+<script type="text/javascript">
+    var dataDetailEVN = null;
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "100%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    $(document).ready(function () {
+        $('.datefield').daterangepicker({
+            singleDatePicker: true,
+            calender_style: "picker_1",
+            format: "DD/MM/YYYY",
+        }, function (start, end, label) {
+            console.log(start.toISOString(), end.toISOString(), label);
+        });
+        $('#AccChild_EVN').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true
+        });
+        $('#AccParent_EVN').change(function () {
+            $.ajax({
+                url: '/ePOS/GetAccountChild',
+                type: 'post',
+                data: { type: $("#AccParent_EVN option:selected").val() },
+                success: function (data) {
+                    if (data.isRedirect) {
+                        window.location.href = data.redirectUrl;
+                    } else if (data.Result === "SUCCESS") {
+                        $('#AccChild_EVN').empty();
+                        $.each(data.Array, function (index, optionData) {
+                            $("#AccChild_EVN").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#AccChild_EVN").multiselect('rebuild');
+                    } else {
+                        $('#AccChild_EVN').empty();
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (errorThrown) {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+        $('#DetailEVNContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Báo cáo chi tiết " +
+                    "[ Tổng số hóa đơn: <span id='total_bill' style='color: red;'>0</span> , Tổng tiền: <span id='total_amount' style='color: red;'>0</span>," +
+                    " Tổng giao dịch nạp TKTĐ: <span id='total_billTKTĐ'style='color: red;'>0</span>, Tổng tiền nạp TKTĐ: <span id='total_amountTKTD'style='color: red;'>0</span> ]</h4></div>");
+               
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: ' ', width: '3%', align: 'center', pinned: true, cellsrenderer: function (row) {
+                        return '<div style="text-align: center; margin-top: 6px;"><a href="#" class="navbutton"' +
+                            ' onclick="CheckDetail(\'' + row + '\' )" >' +
+                            '<img src="/images/list_metro.png" title="Xem thông tin chi tiết"/></a></div>';
+                    }
+                },
+                { text: 'Mã khách hàng', dataField: 'col_1', width: '10%', align: 'center', cellsalign: 'left' },
+                { text: 'Mã thẻ', dataField: 'col_15', width: '7%', align: 'center', cellsalign: 'left' },
+                { text: 'Tên khách hàng', dataField: 'col_2', width: '20%', align: 'center', cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'col_3', width: '33%', cellsalign: 'left', align: 'center' },
+                { text: 'Số GCS', dataField: 'col_4', width: '7%', cellsalign: 'left', align: 'center' },
+                { text: 'Nạp TKTĐ', dataField: 'col_14', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Số tiền', dataField: 'col_5', width: '10%', cellsalign: 'right', align: 'center' },
+                { text: 'Kỳ HĐ', dataField: 'col_6', width: '7%', cellsalign: 'right', align: 'center' },
+                { text: 'Ngày thu', dataField: 'col_12', width: '8%', cellsalign: 'right', align: 'center' },
+                { text: 'Ngày chấm', dataField: 'col_13', width: '8%', cellsalign: 'right', align: 'center' },
+                { text: 'Trạng thái', dataField: 'col_7', width: '10%', align: 'center', cellsalign: 'left' }
+            ],
+        });
+        $('#total_bill').text(0);
+        $('#total_amount').text(0);
+        $('#btnSearchDetailReportEVN').click(function () {
+            var paginginformation = $('#DetailEVNContainer').jqxGrid('getpaginginformation');
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetailEVN',
+                type: 'post',
+                data: {
+                    pcCode: $("#PC_EVN option:selected").val(),
+                    Account: $('#AccParent_EVN option:selected').val(),
+                    ListAcc: getChildSelected(0),
+                    customer: $('#Customer_EVN').val(),
+                    Pay_FromDate: $('#Syn_Pay_FromDate_EVN').val(),
+                    Pay_ToDate: $("#Syn_Pay_ToDate_EVN").val(),
+                    Upload_FromDate: $('#Syn_Upload_FromDate_EVN').val(),
+                    Upload_ToDate: $('#Syn_Upload_ToDate_EVN').val(),
+                    BookCMIS: $('#Syn_GCS_Code_EVN').val(),
+                    status: $('#Status_EVN option:selected').val(),
+                    status_Acc: $('#StatusAcc_EVN option:selected').val(),
+                    pagenum: paginginformation.pagenum,
+                    pagesize: paginginformation.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detailEVN').val(data.id);
+                        dataDetailEVN = data.Records;
+                        $("#DetailEVNContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetailEVN(data));
+                        $("#DetailEVNContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.total_amount);
+                        $('#total_billTKTĐ').text(data.total_billTKTĐ);
+                        $('#total_amountTKTD').text(data.total_amountTKTD);
+                        $('#btnExportDetailReportEVN').prop('disabled', false);
+                    } else {
+                        dataDetailEVN = null;
+                        $('#id_detailEVN').val('');
+                        $('#DetailEVNContainer').jqxGrid('clear');
+                        $('#total_bill').text(0);
+                        $('#total_amount').text(0);
+                        $('#total_billTKTĐ').text(0);
+                        $('#total_amountTKTD').text(0);
+                        $('#btnExportDetailReportEVN').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+        $("#DetailEVNContainer").bind("pagechanged", function (event) {
+            $('.loading').show();
+            $.ajax({
+                url: '/Report/SearchDetailEVN',
+                type: 'post',
+                data: {
+                    pcCode: $("#PC_EVN option:selected").val(),
+                    Account: $('#AccParent_EVN option:selected').val(),
+                    ListAcc: getChildSelected(0),
+                    customer: $('#Customer_EVN').val(),
+                    Pay_FromDate: $('#Syn_Pay_FromDate_EVN').val(),
+                    Pay_ToDate: $("#Syn_Pay_ToDate_EVNl").val(),
+                    Upload_FromDate: $('#Syn_Upload_FromDate_EVN').val(),
+                    Upload_ToDate: $('#Syn_Upload_ToDate_EVN').val(),
+                    BookCMIS: $('#Syn_GCS_Code_EVN').val(),
+                    status: $('#Status_EVN option:selected').val(),
+                    status_Acc: $('#StatusAcc_EVN option:selected').val(),
+                    pagenum: event.args.pagenum,
+                    pagesize: event.args.pagesize
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == "SUCCESS") {
+                        $('#id_detailEVN').val(data.id);
+                        dataDetailEVN = data.Records;
+                        $("#DetailEVNContainer").jqxGrid('refresh');
+                        var dataadapter2 = new $.jqx.dataAdapter(sourceDetailEVN(data));
+                        $("#DetailEVNContainer").jqxGrid({
+                            source: dataadapter2,
+                            virtualmode: true,
+                            rendergridrows: function () {
+                                return dataadapter2.records;
+                            },
+                        });
+                        $('#total_bill').text(data.total_bill);
+                        $('#total_amount').text(data.total_amount);
+                        $('#total_billTKTĐ').text(data.total_billTKTĐ);
+                        $('#total_amountTKTD').text(data.total_amountTKTD);
+                        $('#btnExportDetailReportEVN').prop('disabled', false);
+                    } else {
+                        dataDetailEVN = null;
+                        $('#id_detailEVN').val('');
+                        $('#DetailEVNContainer').jqxGrid('clear');
+                        $('#total_bill').text(0);
+                        $('#total_amount').text(0);
+                        $('#total_billTKTĐ').text(0);
+                        $('#total_amountTKTD').text(0);
+                        $('#btnExportDetailReportEVN').prop('disabled', true);
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+
+    });
+    function CheckDetail(cellValue) {
+       
+
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR')
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                else {
+                    $.ajax({
+                        type: 'get',
+                        url: '/Report/_DetailHistoryBill',
+                        data: {
+                            bill: encodeURI($("#DetailEVNContainer").jqxGrid('getrowdata', cellValue).col_8),
+                            customer: encodeURI($("#DetailEVNContainer").jqxGrid('getrowdata', cellValue).col_1),
+                            amount: encodeURI($("#DetailEVNContainer").jqxGrid('getrowdata', cellValue).col_5)
+                        },
+                        success: function (data) {
+                            $('#dynamic-modal').html(data);
+                            $("#dynamic-modal").modal('show');
+                        },
+                        error: function (ErrorThrown) {
+                            document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                            $('#error').modal('show');
+                        }
+                    });
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function sourceDetailEVN(data) {
+        var source =
+        {
+            datatype: "array",
+            localData: data.Records,
+            totalrecords: data.total_bill,
+            root: 'Rows',
+            beforeprocessing: function (data) {
+                source.totalrecords = data[0].col_16;
+            }
+        };
+        return source;
+    }
+</script>

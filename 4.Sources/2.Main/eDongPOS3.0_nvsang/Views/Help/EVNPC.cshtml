@@ -1,0 +1,298 @@
+﻿@using ePOS3.Utils
+@using Newtonsoft.Json
+@{
+    ePosAccount posAccount = new ePosAccount();
+    if (Request.Cookies[".ASPXAUTH"] != null)
+    {
+        posAccount = (ePosAccount)JsonConvert.DeserializeObject(FormsAuthentication.Decrypt(Request.Cookies[".ASPXAUTH"].Value).UserData, typeof(ePosAccount));
+    }
+    else
+    {
+        <script>
+            $(function() {
+                window.location.href = '/ePOS/Login';
+            });
+        </script>
+        return;
+    }
+}
+@model ePOS3.Models.ManagerPCModel
+<div class="row">
+    <div class="col-md-12 col-xs-12">
+        <div class="x_panel">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a href="#AddBookCMIS" data-toggle="tab">Quản lý PC</a></li>                
+            </ul>
+            <div class="tab-content ">
+                <div class="tab-pane active" id="AddBookCMIS">
+                    <br />
+                    <form class="form-horizontal form-label-left input_mask">
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tổng công ty:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.Provider, Model.Providers, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Công ty điện lực:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                @Html.DropDownListFor(m => m.PC, Model.PCList, new { @class = "form-control chosen-select" })
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã đơn vị:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Code" class="form-control" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Tên đơn vị:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Name" class="form-control" maxlength="200">
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Số điện thoại:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="Phone" class="form-control" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Mã sô thuế:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <input type="text" id="TaxCode" class="form-control" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <label class="control-label col-md-4 col-sm-4 col-xs-12">Địa chỉ:</label>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <textarea class="form-control" id="Address" rows="3" maxlength="200"></textarea>     
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12 form-group has-feedback">
+                            <div class="col-md-12 col-sm-12 col-xs-12 text-left ">
+                                <button type="button" id="btnSearchEVNPC" class="btn btn-success">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="EVNPCContainer"></div>
+                </div>               
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dynamic-modal"></div>
+<script type="text/javascript">
+    var config = {
+        '.chosen-select': {},
+        '.chosen-select-deselect': { allow_single_deselect: true },
+        '.chosen-select-no-single': { disable_search_threshold: 10 },
+        '.chosen-select-no-results': { no_results_text: 'Oops, nothing found!' },
+        '.chosen-select-width': { width: "95%" }
+    }
+    for (var selector in config) {
+        $(selector).chosen(config[selector]);
+    }
+    var datasourePC = null;
+    $(document).ready(function () {
+        changePC();
+        $('#Provider').focus();
+        $('#Provider').change(function () {
+            var x = $("#Provider option:selected").val();
+            if (x === '1' || x === '2') {
+                changePC();
+            }
+            else {
+                $('#PC').prop('disabled', false).trigger("chosen:updated");
+                $.ajax({
+                    url: '/ePOS/getPCbyEVN',
+                    type: 'post',
+                    data: {
+                        id: x,
+                        index: '0'
+                    },
+                    success: function (data) {
+                        if (data.isRedirect) {
+                            window.location.href = data.redirectUrl;
+                        }
+                        $('#PC').empty();
+                        $.each(data.Data, function (index, optionData) {
+                            $("#PC").append("<option value='" + optionData.Value + "'>" + optionData.Text + "</option>");
+                        });
+                        $("#PC").trigger('chosen:updated');
+                        $("#PC").change();
+                    },
+                    error: function (errorThrown) {
+                    }
+                });
+            }
+        });
+        $('#EVNPCContainer').jqxGrid({
+            width: '100%',
+            autoheight: true,
+            renderToolbar: function (toolbar) {
+                var container = $("<div style='overflow: hidden; position: relative; height: 100%; width: 100%; text-align: center;background: #5992cd;'>" +
+                    "<h4 style='margin-top: 10px; float: left; padding-left: 10px; font-size: 11px; font-weight: bold;'>Danh sách điện lực</h4></div>");
+                var buttonTemplate = ' <div style="float: right; padding-top:5px;"><a href="#" class="navbutton" onclick="checkCNN(\'' + 1 + '\',\'' + 2 + '\')" title="Thêm mới điện lực">' +
+                    '<img src="/images/icon_add.png"/><label style="margin-top:-15px; padding-right:10px; padding-left: 5px; cursor: pointer">Thêm mới</label></a></div>';
+                var switchButton = $(buttonTemplate);
+                container.append(switchButton);
+                toolbar.append(container);
+            },
+            enablebrowserselection: true,
+            columnsresize: true,
+            sortable: false,
+            pageable: true,
+            pagesize: 50,
+            pagesizeoptions: ['50', '100', '200', '300', '500'],
+            pagerMode: 'advanced',
+            showToolbar: true,
+            autorowheight: true,
+            altrows: true,
+            columns: [
+                {
+                    text: ' ', width: '3%', pinned: true, cellsrenderer: function (row) {
+                        return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 0 + '\')" >' +
+                            '<img src="/images/icon_edit.png" title="Cập nhật"/></a></div>';
+                    }
+                },
+                {
+                    text: ' ', width: '3%', pinned: true, cellsrenderer: function (row) {
+                        return '<div style="text-align: center; padding-top:5px;"><a href="#" class="navbutton"' +
+                            ' onclick="checkCNN(\'' + row + '\',\'' + 1 + '\')" >' +
+                            '<img src="/images/list_metro.png" title="Chi tiết ví Mapping"/></a></div>';
+                    }
+                },
+                { text: 'Mã PC', dataField: 'code', width: '6%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Mã MR', dataField: 'ext', width: '6%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Tên đầy đủ', dataField: 'fullName', width: '25%', pinned: true, align: 'center', cellsalign: 'left' },
+                { text: 'Tên viết tắt', dataField: 'shortName', width: '12%', align: 'center', cellsalign: 'left' },
+                { text: 'Địa chỉ', dataField: 'address', width: '30%', align: 'center', },
+                { text: 'Số điện thoại', dataField: 'phone1', width: '10%', align: 'center', cellsalign: 'left' },
+                {
+                    text: 'Trạng thái', dataField: 'status', width: '10%', align: 'center', cellsalign: 'left',
+                    cellsrenderer: function (row, columnfield, value) {
+                        if (value == 1) {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Đã triển khai</div>';
+                        } else {
+                            return '<div class="jqx-grid-cell-left-align" style="margin-top: 6px;">Chưa triển khai</div>';
+                        }
+                    }
+                }
+            ]
+        });
+        $('#btnSearchEVNPC').click(function () {
+            $('.loading').show();
+            $.ajax({
+                url: '/Help/SearchEVNPC',
+                type: 'post',
+                data: {
+                    provider: $('#Provider option:selected').val(),
+                    ParentPCCode: $('#PC option:selected').val(),
+                    Name: $('#Name').val(),
+                    Code: $("#Code").val(),
+                    Tax: $("#TaxCode").val(),
+                    Address: $("#Address").val(),
+                    phoneNumber: $("#Phone").val()
+                },
+                success: function (data) {
+                    $('.loading').hide();
+                    if (data.isRedirect)
+                        window.location.href = data.redirectUrl;
+                    if (data.Result == 'SUCCESS') {
+                        datasourePC = data.Records;
+                        $("#EVNPCContainer").jqxGrid('refresh');
+                        $("#EVNPCContainer").jqxGrid({ source: new $.jqx.dataAdapter(sourcePC(datasourePC)) });
+                    } else {
+                        datasourePC = null;
+                        $('#EVNPCContainer').jqxGrid('clear');
+                        document.getElementById('msg_error').innerHTML = data.Message;
+                        $('#error').modal('show');
+                    }
+                },
+                error: function (ErrorThrown) {
+                    $('.loading').hide();
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                }
+            });
+        });
+    });
+    function sourcePC(data) {
+        var source =
+        {
+            id: 'code',
+            localData: data,
+        };
+        return source;
+    }
+    function checkCNN(cellValue, index) {
+        $.ajax({
+            url: '/ePOS/CheckSession',
+            type: 'post',
+            success: function (data) {
+                if (data.Result == 'ERROR') {
+                    window.location.href = '@Url.Action("Login", "ePOS")';
+                } else {
+                    if (index == 0) {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_EditEVNPC',
+                            data: {
+                                id: JSON.stringify($("#EVNPCContainer").jqxGrid('getrowdata', cellValue)),
+                                index: cellValue
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else if (index == 1) { // chi tiết
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_ListAccByPC',
+                            data: {
+                                pc: $("#EVNPCContainer").jqxGrid('getrowdata', cellValue).pcId
+                            },
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            type: 'get',
+                            url: '/Help/_AddEVNPC',                           
+                            success: function (data) {
+                                $('#dynamic-modal').html(data);
+                                $("#dynamic-modal").modal('show');
+                            },
+                            error: function (ErrorThrown) {
+                                document.getElementById('msg_error').innerHTML = 'Lỗi hệ thống. Vui lòng liên hệ bộ phận kỹ thuật';
+                                $('#error').modal('show');
+                            }
+                        });
+                    }
+                }
+            },
+            error: function (ErrorThrown) {
+                window.location.href = '@Url.Action("Login", "ePOS")';
+            }
+        });
+    }
+    function changePC() {
+        $('#PC').prop('disabled', true).trigger("chosen:updated");
+        $("#PC").empty();
+        $("#PC").append("<option value='" + " " + "'>" + " " + "</option>");
+        $("#PC").trigger('chosen:updated');
+        $("#PC").change();
+    }
+</script>
